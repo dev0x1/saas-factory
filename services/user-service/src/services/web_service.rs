@@ -1,16 +1,25 @@
-use crate::controllers;
+use crate::{controllers, settings::Settings};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
-pub async fn start_web_service() {
-    let _ = HttpServer::new(move || {
+pub async fn start_web_service(configuration: Settings) -> Result<(), std::io::Error> {
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
+
+    let server = HttpServer::new(move || {
         App::new()
             .service(web::scope("/api/v1.0").configure(controllers::global_router))
             .default_service(web::get().to(not_found))
     })
-    .bind("127.0.0.1:8080")
-    .unwrap()
-    .run()
-    .await;
+    .bind(&address)?;
+
+    server
+        .workers(configuration.application.workers)
+        .run()
+        .await?;
+
+    Ok(())
 }
 
 pub async fn not_found() -> impl Responder {

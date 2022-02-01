@@ -9,3 +9,10 @@ authors = ["gaurav@mypass.id"]
 [dependencies]
 # web
 actix-web = "4.0.0-beta.14"
+
+# message packing
+serde = "1.0.115"
+serde-aux = "3"
+
+# configuration
+config = { version = "0.11", default-features = false, features = ["toml"] }
