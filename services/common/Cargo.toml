@@ -1,5 +1,5 @@
 [package]
-name = "user-service"
+name = "common"
 version = "0.1.0"
 edition = "2021"
 authors = ["gaurav@mypass.id"]
@@ -7,15 +7,8 @@ authors = ["gaurav@mypass.id"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# common utils
-common = { path = "../common"}
-
-# web
-actix-web = "4.0.0-beta.14"
-
 # message packing
 serde = "1.0.115"
-serde-aux = "3"
 
 # configuration
 config = { version = "0.11", default-features = false, features = ["toml"] }
