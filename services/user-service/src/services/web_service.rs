@@ -1,5 +1,7 @@
 use crate::{controllers, settings::Settings};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_web_opentelemetry::RequestTracing;
+use tracing_actix_web::TracingLogger;
 
 pub async fn start_web_service(configuration: Settings) -> Result<(), std::io::Error> {
     let address = format!(
@@ -9,6 +11,8 @@ pub async fn start_web_service(configuration: Settings) -> Result<(), std::io::E
 
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(TracingLogger::default())
+            .wrap(RequestTracing::new())
             .service(web::scope("/api/v1.0").configure(controllers::global_router))
             .default_service(web::get().to(not_found))
     })
