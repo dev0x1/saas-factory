@@ -4,11 +4,12 @@ use opentelemetry::{
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
-pub fn config_telemetry(app_name: &str) {
+pub fn config_telemetry(app_name: &str, jaeger_url: &str) {
     // Start a new Jaeger trace pipeline.
     // Spans are exported in batch - recommended setup for a production application.
     global::set_text_map_propagator(TraceContextPropagator::new());
     let tracer = opentelemetry_jaeger::new_pipeline()
+        .with_agent_endpoint(jaeger_url)
         .with_service_name(app_name)
         .install_batch(TokioCurrentThread)
         .expect("Failed to install OpenTelemetry tracer.");

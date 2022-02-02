@@ -1,8 +1,26 @@
 version: "3.8"
 
 services:
+  # User service
+  user-service:
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile.dev
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8001/" ]
+      interval: 1m
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    ports:
+      - 8001:8001
+  # opentelemetry - jaeger
   jaeger:
     image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    restart: always
     ports:
       - "5775:5775/udp"
       - "6831:6831/udp"

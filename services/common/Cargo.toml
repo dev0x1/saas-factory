@@ -15,7 +15,6 @@ config = { version = "0.11", default-features = false, features = ["toml"] }
 
 # Tracing
 tracing = "0.1.29"
-tracing-log = "0.1.1"
 tracing-appender = "0.2"
 tracing-futures = "0.2"
 opentelemetry = { version = "0.16", features = ["trace", "metrics", "rt-tokio-current-thread"] }

@@ -4,6 +4,7 @@ use std::error::Error;
 pub type ApiResult = Result<actix_web::HttpResponse, ApiError>;
 
 pub enum ApiError {
+    ConfigError(config::ConfigError),
     ValidationError(String),
     NotFound(String),
     UnexpectedError(String),
@@ -45,10 +46,17 @@ impl std::fmt::Debug for ApiError {
 impl std::error::Error for ApiError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            ApiError::ConfigError(e) => Some(e),
             ApiError::ValidationError(_) | ApiError::NotFound(_) | ApiError::UnexpectedError(_) => {
                 None
             }
         }
+    }
+}
+
+impl From<config::ConfigError> for ApiError {
+    fn from(err: config::ConfigError) -> Self {
+        ApiError::ConfigError(err)
     }
 }
 

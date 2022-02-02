@@ -6,6 +6,7 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub log: LogSettings,
     pub rate_limit: RateLimitingSettings,
+    pub tracer: Tracer,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
@@ -24,6 +25,16 @@ pub struct LogSettings {
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
+pub struct Tracer {
+    pub jaeger: Jaeger,
+}
+
+#[derive(Debug, serde::Deserialize, Clone)]
+pub struct Jaeger {
+    pub url: String,
+}
+
+#[derive(Debug, serde::Deserialize, Clone)]
 pub struct RateLimitingSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub burst_size: u32,
@@ -31,6 +42,8 @@ pub struct RateLimitingSettings {
     pub frequency: u64,
 }
 
-pub fn get_settings() -> Result<Settings, config::ConfigError> {
-    configuration::load_configuration::<Settings>()
+impl Settings {
+    pub fn load() -> Result<Settings, config::ConfigError> {
+        configuration::load_configuration::<Settings>()
+    }
 }
