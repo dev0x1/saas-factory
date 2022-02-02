@@ -3,3 +3,7 @@ port= 8001
 host= "127.0.0.1"
 base_url= "http://127.0.0.1"
 workers= 4
+
+[rate_limit]
+burst_size = 5
+frequency = 2

@@ -5,6 +5,7 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 pub struct Settings {
     pub application: ApplicationSettings,
     pub log: LogSettings,
+    pub rate_limit: RateLimitingSettings,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
@@ -20,6 +21,14 @@ pub struct ApplicationSettings {
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct LogSettings {
     pub level: String,
+}
+
+#[derive(Debug, serde::Deserialize, Clone)]
+pub struct RateLimitingSettings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub burst_size: u32,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub frequency: u64,
 }
 
 pub fn get_settings() -> Result<Settings, config::ConfigError> {
