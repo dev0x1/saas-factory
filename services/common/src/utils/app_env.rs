@@ -1,4 +1,5 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::{TryFrom,
+                   TryInto};
 
 /// The possible runtime environment for our application.
 pub enum Environment {
@@ -21,10 +22,9 @@ impl Environment {
     pub fn get_current_env() -> Self {
         // Detect the running environment.
         // Default to `development` if unspecified.
-        std::env::var("APP_ENVIRONMENT")
-            .unwrap_or_else(|_| "development".into())
-            .try_into()
-            .expect("Failed to parse APP_ENVIRONMENT.")
+        std::env::var("APP_ENVIRONMENT").unwrap_or_else(|_| "development".into())
+                                        .try_into()
+                                        .expect("Failed to parse APP_ENVIRONMENT.")
     }
 }
 

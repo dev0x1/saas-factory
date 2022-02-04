@@ -1,4 +1,6 @@
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
+use actix_web::{error::ResponseError,
+                http::StatusCode,
+                HttpResponse};
 use std::error::Error;
 
 pub type ApiResult = Result<actix_web::HttpResponse, ApiError>;
@@ -12,23 +14,19 @@ pub enum ApiError {
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ApiStatusResponse {
-    pub code: u16,
+    pub code:    u16,
     pub message: String,
 }
 
 impl ApiStatusResponse {
     pub fn new(status_code: StatusCode, message: &str) -> Self {
-        Self {
-            code: status_code.as_u16(),
-            message: message.to_string(),
-        }
+        Self { code:    status_code.as_u16(),
+               message: message.to_string(), }
     }
 }
 
 impl std::fmt::Display for ApiError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self) }
 }
 
 impl std::fmt::Debug for ApiError {
@@ -55,9 +53,7 @@ impl std::error::Error for ApiError {
 }
 
 impl From<config::ConfigError> for ApiError {
-    fn from(err: config::ConfigError) -> Self {
-        ApiError::ConfigError(err)
-    }
+    fn from(err: config::ConfigError) -> Self { ApiError::ConfigError(err) }
 }
 
 impl ResponseError for ApiError {
