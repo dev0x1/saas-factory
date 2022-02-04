@@ -1,5 +1,5 @@
 # 1: Build the application
-FROM rust:latest as builder
+FROM rust:1.58.1 as builder
 ENV CARGO_TERM_COLOR always
 WORKDIR /app/docker-build
 

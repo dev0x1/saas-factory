@@ -1,6 +1,5 @@
 use common::utils::telemetry;
-use user_service::{services,
-                   settings::Settings};
+use user_service::{services, settings::Settings};
 
 #[actix_web::main]
 async fn main() -> Result<(), std::io::Error> {
