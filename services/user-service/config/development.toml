@@ -1,2 +1,5 @@
 [log]
 level = "debug"
+rust_log = "debug, actix_web=debug, actix_server=debug, actix_http=debug"
+rust_backtrace = "full"
+redacted_errors = false

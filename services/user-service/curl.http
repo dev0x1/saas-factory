@@ -1,0 +1,24 @@
+@host=http://localhost:8001/api/v1.0
+
+###
+# @name health
+GET {{host}}/health
+
+
+###
+# @name get_user_by_id
+GET {{host}}/user?_id=12345678123456781234567812345678
+
+
+###
+# @name create_user
+POST {{host}}/user
+Content-Type: application/json
+
+{
+    "EMAIL": "hello@mail.com"
+}
+
+###
+# @name get_user_by_id
+GET {{host}}/user?EMAIL=hello@mail.com

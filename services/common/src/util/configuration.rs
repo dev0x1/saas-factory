@@ -1,4 +1,4 @@
-use crate::utils::app_env::Environment;
+use crate::util::app_env::Environment;
 
 pub fn load_configuration<'a, T: serde::Deserialize<'a>>() -> Result<T, config::ConfigError> {
     let mut settings = config::Config::default();

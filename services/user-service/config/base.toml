@@ -1,8 +1,16 @@
 [application]
-port= 8001
-host= "0.0.0.0"
-base_url= "localhost"
-workers= 4
+port = 8001
+host = "user_service"
+base_url = "localhost"
+workers = 4
+max_json_payload_size = 4096
+
+[db]
+user_name = "user"
+password = "password"
+host = "mongodb"
+port = "27017"
+database_name = "account"
 
 [rate_limit]
 burst_size = 5

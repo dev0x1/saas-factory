@@ -1,9 +1,10 @@
-use common::utils::configuration;
+use common::{client::db_mongo::MongoClientSettings, util::configuration};
 use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Settings {
     pub application: ApplicationSettings,
+    pub db: MongoClientSettings,
     pub log: LogSettings,
     pub rate_limit: RateLimitingSettings,
     pub tracer: Tracer,
@@ -17,11 +18,16 @@ pub struct ApplicationSettings {
     pub base_url: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub workers: usize,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub max_json_payload_size: usize,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct LogSettings {
     pub level: String,
+    pub rust_log: String,
+    pub rust_backtrace: String,
+    pub redacted_errors: bool,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]

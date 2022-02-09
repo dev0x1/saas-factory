@@ -1,1 +1,3 @@
-pub mod utils;
+pub mod client;
+pub mod error;
+pub mod util;
