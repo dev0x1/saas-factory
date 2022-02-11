@@ -2,10 +2,9 @@ use actix_web::{
     web::{self},
     HttpResponse, Scope,
 };
+use bson::Uuid;
 use chrono::Utc;
-use common::error::ApiResult;
-use tracing::error;
-use uuid::Uuid;
+use common::error::{ApiResult, InternalError};
 
 use crate::{
     context::AppContext,
@@ -29,50 +28,29 @@ pub fn router() -> Scope {
 #[tracing::instrument(name = "query", skip(user), level = "info")]
 pub async fn query(ctx: web::Data<AppContext>, web::Query(user): web::Query<User>) -> ApiResult {
     match user.id {
-        Some(_) => get_by_id(ctx, user).await,
+        Some(id) => get_by_id(ctx, &id).await,
         None => get_by_condition(ctx, user).await,
     }
 }
 
-async fn get_by_id(ctx: web::Data<AppContext>, user: User) -> ApiResult {
-    if let Some(id) = user.id {
-        let res = user_repository::find_by_id(&id, ctx.db()).await;
-        match res {
-            Ok(info) => match info {
-                Some(info) => Ok(HttpResponse::Ok()
-                    .content_type("application/json")
-                    .json(info)),
-                None => Ok(HttpResponse::NotFound()
-                    .content_type("plain/text")
-                    .body("no such id")),
-            },
-            Err(err) => {
-                error!("failed to get by id {}, detail: {}", &id, err);
-                Ok(HttpResponse::InternalServerError()
-                    .content_type("plain/text")
-                    .body(err.to_string()))
-            }
-        }
-    } else {
-        Ok(HttpResponse::UnprocessableEntity()
-            .content_type("plain/text")
-            .body("no `_id` field received"))
+async fn get_by_id(ctx: web::Data<AppContext>, id: &Uuid) -> ApiResult {
+    let user = user_repository::find_by_id(id, ctx.db()).await?;
+
+    match user {
+        Some(user) => Ok(HttpResponse::Ok()
+            .content_type("application/json")
+            .json(user)),
+        None => Err(InternalError::UserNotFound {
+            user_id: id.to_uuid_0_8(),
+        }),
     }
 }
 
 async fn get_by_condition(ctx: web::Data<AppContext>, user: User) -> ApiResult {
-    let res = user_repository::find_all(&user, ctx.db()).await;
-    match res {
-        Ok(users) => Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .json(users)),
-        Err(err) => {
-            error!("failed to query by condition: {}, detail: {}", user, err);
-            Ok(HttpResponse::InternalServerError()
-                .content_type("plain/text")
-                .body(err.to_string()))
-        }
-    }
+    let users = user_repository::find_all_with_query(&user, ctx.db()).await?;
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .json(users))
 }
 
 ///
@@ -81,15 +59,15 @@ async fn get_by_condition(ctx: web::Data<AppContext>, user: User) -> ApiResult {
 #[tracing::instrument(name = "create", skip(user), level = "info")]
 pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiResult {
     // verify necessary fields
-    if user.email == None {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("plain/text")
-            .body("require fields: `EMAIL`"));
+    if user.email.is_none() {
+        return Err(InternalError::RequestFormatError {
+            reason: "require fields: `EMAIL`".to_string(),
+        });
     }
 
     let now = Some(Utc::now());
     let to_create = User {
-        id: Some(Uuid::new_v4()),
+        id: Some(bson::Uuid::new()),
         status: Some(UserStatus::Active),
         role: Some(UserRole::User),
         created_at: now,
@@ -97,18 +75,11 @@ pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiRes
         ..user.0
     };
 
-    let res = user_repository::insert_one(&to_create, ctx.db()).await;
-    match res {
-        Ok(user) => Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .json(user)),
-        Err(err) => {
-            error!("failed to create: {}, detail: {}", to_create, err);
-            Ok(HttpResponse::InternalServerError()
-                .content_type("plain/text")
-                .body(err.to_string()))
-        }
-    }
+    let user = user_repository::insert_one(&to_create, ctx.db()).await?;
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .json(user))
 }
 
 ///
@@ -117,24 +88,15 @@ pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiRes
 #[tracing::instrument(name = "update_by_id", skip(user), level = "info")]
 pub async fn update_by_id(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiResult {
     // verify necessary fields
-    if user.id == None {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("plain/text")
-            .body("require fields: `_id`"));
+    if user.id.is_none() {
+        return Err(InternalError::RequestFormatError {
+            reason: "require fields: `_id`".to_string(),
+        });
     }
 
-    let res = user_repository::update_by_id(&user, ctx.db()).await;
-    match res {
-        Ok(user) => Ok(HttpResponse::Ok()
-            .content_type("application/json")
-            .json(user)),
-        Err(err) => {
-            error!("failed to update: {}, detail: {}", user, err);
-            Ok(HttpResponse::InternalServerError()
-                .content_type("plain/text")
-                .body(err.to_string()))
-        }
-    }
+    let _: u64 = user_repository::update_by_id(&user, ctx.db()).await?;
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 ///
@@ -145,24 +107,13 @@ pub async fn delete_by_id(
     ctx: web::Data<AppContext>,
     web::Query(user): web::Query<User>,
 ) -> ApiResult {
-    // verify necessary fields
-    if user.id == None {
-        return Ok(HttpResponse::UnprocessableEntity()
-            .content_type("plain/text")
-            .body("require fields: `_id`"));
-    }
-
-    let id = user.id.unwrap();
-    let res = user_repository::delete_one(&id, ctx.db()).await;
-    match res {
-        Ok(_) => Ok(HttpResponse::NoContent()
-            .content_type("plain/text")
-            .body("")),
-        Err(err) => {
-            error!("failed to delete by id {}, detail: {}", id, err);
-            Ok(HttpResponse::InternalServerError()
-                .content_type("plain/text")
-                .body(err.to_string()))
+    match user.id {
+        Some(id) => {
+            let _: u64 = user_repository::delete_one(&id, ctx.db()).await?;
+            Ok(HttpResponse::Ok().finish())
         }
+        None => Err(InternalError::RequestFormatError {
+            reason: "require fields: `_id`".to_string(),
+        }),
     }
 }

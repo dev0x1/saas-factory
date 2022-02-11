@@ -1,10 +1,9 @@
-use mongodb::bson::Bson;
+use mongodb::bson::{self, doc, Bson};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::fmt;
 use std::fmt::Formatter;
 use strum::{Display, EnumString};
-use uuid::Uuid;
 
 pub mod prelude {
     // Collection name
@@ -74,11 +73,12 @@ impl From<UserRole> for Bson {
     }
 }
 
+//#[serde_with::serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
     #[serde(rename = "_id")]
-    pub id: Option<Uuid>,
+    pub id: Option<bson::Uuid>,
     #[serde(rename = "EMAIL")]
     pub email: Option<String>,
     #[serde(rename = "FIRST_NAME")]
@@ -91,8 +91,10 @@ pub struct User {
     pub status: Option<UserStatus>,
     #[serde(rename = "ROLE")]
     pub role: Option<UserRole>,
+    // #[serde_as(as = "Option<bson::DateTime>")]
     #[serde(rename = "CREATED_AT")]
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+    // #[serde_as(as = "Option<bson::DateTime>")]
     #[serde(rename = "UPDATED_AT")]
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }

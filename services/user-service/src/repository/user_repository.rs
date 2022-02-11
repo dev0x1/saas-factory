@@ -1,25 +1,37 @@
 use crate::model::domain::user::{prelude::*, User};
-use futures::StreamExt;
+use bson::from_bson;
+use bson::Uuid;
+use common::error::InternalError;
+use futures::TryStreamExt;
 use mongodb::{
     bson::{doc, Document},
     options::FindOptions,
     Database,
 };
-use uuid::Uuid;
 
-pub async fn find_by_id(id: &Uuid, db: &Database) -> Result<Option<User>, mongodb::error::Error> {
-    let filter = doc! { "_id": id };
-    db.collection::<User>(COLLECTION_USERS)
+pub async fn find_by_id(id: &Uuid, db: &Database) -> Result<Option<User>, InternalError> {
+    let filter = doc! { ID: id };
+    let user = db
+        .collection::<User>(COLLECTION_USERS)
         .find_one(filter, None)
-        .await
+        .await?;
+    Ok(user)
 }
 
-pub async fn find_all(cond: &User, db: &Database) -> Result<Vec<User>, mongodb::error::Error> {
-    let find_opts = FindOptions::builder().sort(doc! {"_id": 1}).build();
+pub async fn find_all(db: &Database) -> Result<Vec<User>, InternalError> {
+    let cursor = db
+        .collection::<User>(COLLECTION_USERS)
+        .find(doc! {}, None)
+        .await?;
+    Ok(cursor.try_collect().await?)
+}
+
+pub async fn find_all_with_query(cond: &User, db: &Database) -> Result<Vec<User>, InternalError> {
+    let find_opts = FindOptions::builder().sort(doc! {ID: 1}).build();
 
     let mut doc = Document::new();
     if let Some(id) = cond.id {
-        doc.insert("_id", id);
+        doc.insert(ID, id);
     }
     if let Some(email) = &cond.email {
         doc.insert(EMAIL, &email);
@@ -33,45 +45,51 @@ pub async fn find_all(cond: &User, db: &Database) -> Result<Vec<User>, mongodb::
     if let Some(phone_number) = &cond.phone_number {
         doc.insert(PHONE, &phone_number);
     }
-    if let Some(status) = &cond.status {
-        doc.insert(STATUS, &status);
+    if let Some(status) = cond.status {
+        doc.insert(STATUS, status);
     }
-    if let Some(role) = &cond.role {
-        doc.insert(ROLE, &role);
+    if let Some(role) = cond.role {
+        doc.insert(ROLE, role);
     }
-    if let Some(created_at) = &cond.created_at {
-        doc.insert(CREATED_AT, &created_at);
+    if let Some(created_at) = cond.created_at {
+        doc.insert(CREATED_AT, created_at);
     }
-    if let Some(updated_at) = &cond.updated_at {
-        doc.insert(UPDATED_AT, &updated_at);
+    if let Some(updated_at) = cond.updated_at {
+        doc.insert(UPDATED_AT, updated_at);
     }
 
-    let mut cursor = db
+    let cursor = db
         .collection::<User>(COLLECTION_USERS)
         .find(doc, find_opts)
         .await?;
-    let mut ret: Vec<User> = Vec::new();
-    while let Some(info) = cursor.next().await {
-        match info {
-            Ok(info) => ret.push(info),
-            Err(err) => return Err(err),
-        }
-    }
+    Ok(cursor.try_collect().await?)
+}
+
+pub async fn insert_one(user: &User, db: &Database) -> Result<User, InternalError> {
+    let mut ret = user.clone();
+
+    let res = db
+        .collection::<User>(COLLECTION_USERS)
+        .insert_one(user, None)
+        .await?;
+
+    let ret = from_bson(res.inserted_id).and_then(|id: Uuid| {
+        ret.id = Some(id);
+        Ok(ret)
+    })?;
+
     Ok(ret)
 }
 
-pub async fn insert_one(user: &User, db: &Database) -> Result<(), mongodb::error::Error> {
-    db.collection::<User>(COLLECTION_USERS)
-        .insert_one(user, None)
-        .await
-        .and_then(|_| Ok(()))
-}
-
-pub async fn update_by_id(user: &User, db: &Database) -> Result<User, mongodb::error::Error> {
-    let ret = user.clone();
-
+pub async fn update_by_id(user: &User, db: &Database) -> Result<u64, InternalError> {
+    if user.id.is_none() {
+        return Err(InternalError::RequestFormatError {
+            reason: "require fields: `_id`".to_string(),
+        });
+    }
     let id = user.id.unwrap();
-    let query = doc! { "_id": id };
+
+    let query = doc! { ID: id };
 
     let mut update = Document::new();
     if let Some(email) = &user.email {
@@ -99,7 +117,8 @@ pub async fn update_by_id(user: &User, db: &Database) -> Result<User, mongodb::e
         update.insert(UPDATED_AT, &updated_at);
     }
 
-    db.collection::<User>(COLLECTION_USERS)
+    let res = db
+        .collection::<User>(COLLECTION_USERS)
         .update_one(
             query,
             doc! {
@@ -107,18 +126,19 @@ pub async fn update_by_id(user: &User, db: &Database) -> Result<User, mongodb::e
             },
             None,
         )
-        .await
-        .and_then(|_| Ok(ret))
+        .await?;
+    Ok(res.modified_count)
 }
 
-pub async fn delete_one(id: &Uuid, db: &Database) -> Result<(), mongodb::error::Error> {
-    db.collection::<User>(COLLECTION_USERS)
+pub async fn delete_one(id: &Uuid, db: &Database) -> Result<u64, InternalError> {
+    let res = db
+        .collection::<User>(COLLECTION_USERS)
         .delete_one(
             doc! {
-                "_id" : id
+                ID : id
             },
             None,
         )
-        .await
-        .and_then(|_| Ok(()))
+        .await?;
+    Ok(res.deleted_count)
 }

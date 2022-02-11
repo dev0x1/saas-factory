@@ -87,17 +87,8 @@ pub enum InternalError {
     #[display(fmt = "Request to {} failed with {}", url, cause)]
     RemoteRequestError { cause: String, url: String },
 
-    #[display(fmt = "Account {} not found", account_id)]
-    AccountNotFound { account_id: Uuid },
-
-    #[display(fmt = "Account profile {} not found", profile_id)]
-    AccountProfileNotFound { profile_id: Uuid },
-
-    #[display(fmt = "Device profile {} not found", profile_id)]
-    DeviceProfileNotFound { profile_id: Uuid },
-
-    #[display(fmt = "Account {} cannot be updated: it is cancelled", account_id)]
-    AccountCancelled { account_id: Uuid },
+    #[display(fmt = "User {} not found", user_id)]
+    UserNotFound { user_id: Uuid },
 
     #[display(fmt = "Failed to internally notify: {}", cause)]
     SendNotificationError { cause: String },
@@ -125,10 +116,7 @@ impl InternalError {
             InternalError::InvalidJsonError { cause: _ } => 2105,
             InternalError::InvalidUrl { cause: _ } => 2150,
             InternalError::BsonAccessError { cause: _ } => 2207,
-            InternalError::AccountNotFound { account_id: _ } => 2509,
-            InternalError::AccountProfileNotFound { profile_id: _ } => 2510,
-            InternalError::DeviceProfileNotFound { profile_id: _ } => 2511,
-            InternalError::AccountCancelled { account_id: _ } => 2512,
+            InternalError::UserNotFound { user_id: _ } => 2509,
             InternalError::SendNotificationError { cause: _ } => 2920,
             InternalError::SendRequestError { cause: _ } => 3000,
         }
@@ -167,10 +155,7 @@ impl ResponseError for InternalError {
             InternalError::InvalidJsonError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::InvalidBsonError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::BsonAccessError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            InternalError::AccountNotFound { account_id: _ } => StatusCode::BAD_REQUEST,
-            InternalError::AccountProfileNotFound { profile_id: _ } => StatusCode::BAD_REQUEST,
-            InternalError::DeviceProfileNotFound { profile_id: _ } => StatusCode::BAD_REQUEST,
-            InternalError::AccountCancelled { account_id: _ } => StatusCode::BAD_REQUEST,
+            InternalError::UserNotFound { user_id: _ } => StatusCode::UNPROCESSABLE_ENTITY,
             InternalError::SendNotificationError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::SendRequestError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
         }

@@ -6,19 +6,67 @@ GET {{host}}/health
 
 
 ###
-# @name get_user_by_id
+# @name get_user_by_id_should_fail
 GET {{host}}/user?_id=12345678123456781234567812345678
 
 
 ###
-# @name create_user
+# @name create_user1
 POST {{host}}/user
 Content-Type: application/json
 
 {
-    "EMAIL": "hello@mail.com"
+    "EMAIL": "user1@mail.com"
 }
 
 ###
+# @name create_user2
+POST {{host}}/user
+Content-Type: application/json
+
+{
+    "EMAIL": "user2@mail.com"
+}
+
+###
+# @name create_user_invalid_format_fail
+POST {{host}}/user
+Content-Type: application/json
+
+{
+    "_id": "00c7d7cc-a8f2-4b85-93f7-cd25848f67e1"
+}
+
+###
+# @name get_user_by_email
+GET {{host}}/user?EMAIL=user1@mail.com
+
+###
+# @name update_user_by_id
+PUT {{host}}/user
+Content-Type: application/json
+
+{
+    "_id": "b223d113-07f7-460b-a6b6-990f6bd6f4a0",
+    "EMAIL": "user1.updated@mail.com"
+}
+
+###
+# @name get_user_by_email
+GET {{host}}/user?EMAIL=user1@mail.com
+
+###
+# @name get_user_by_email
+GET {{host}}/user?EMAIL=user1.updated@mail.com
+
+###
+# @name get_user_by_email
+GET {{host}}/user?EMAIL=user2@mail.com
+
+###
+# @name get_all_users
+GET {{host}}/user
+
+###
 # @name get_user_by_id
-GET {{host}}/user?EMAIL=hello@mail.com
+GET {{host}}/user?_id=70276e81-9ac4-4613-b066-770077a80bfc
