@@ -82,12 +82,9 @@ pub async fn insert_one(user: &User, db: &Database) -> Result<User, InternalErro
 }
 
 pub async fn update_by_id(user: &User, db: &Database) -> Result<u64, InternalError> {
-    if user.id.is_none() {
-        return Err(InternalError::RequestFormatError {
-            reason: "require fields: `_id`".to_string(),
-        });
-    }
-    let id = user.id.unwrap();
+    let id = user.id.ok_or(InternalError::RequestFormatError {
+        reason: "require fields: `_id`".to_string(),
+    })?;
 
     let query = doc! { ID: id };
 

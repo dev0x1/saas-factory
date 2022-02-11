@@ -107,13 +107,10 @@ pub async fn delete_by_id(
     ctx: web::Data<AppContext>,
     web::Query(user): web::Query<User>,
 ) -> ApiResult {
-    match user.id {
-        Some(id) => {
-            let _: u64 = user_repository::delete_one(&id, ctx.db()).await?;
-            Ok(HttpResponse::Ok().finish())
-        }
-        None => Err(InternalError::RequestFormatError {
-            reason: "require fields: `_id`".to_string(),
-        }),
-    }
+    let id = user.id.ok_or(InternalError::RequestFormatError {
+        reason: "require fields: `_id`".to_string(),
+    })?;
+
+    let _: u64 = user_repository::delete_one(&id, ctx.db()).await?;
+    Ok(HttpResponse::Ok().finish())
 }
