@@ -1,6 +1,5 @@
 use crate::model::domain::user::{prelude::*, User};
-use bson::from_bson;
-use bson::Uuid;
+use bson::{from_bson, Uuid};
 use common::error::InternalError;
 use futures::TryStreamExt;
 use mongodb::{
@@ -18,13 +17,13 @@ pub async fn find_by_id(id: &Uuid, db: &Database) -> Result<Option<User>, Intern
     Ok(user)
 }
 
-pub async fn find_all(db: &Database) -> Result<Vec<User>, InternalError> {
-    let cursor = db
-        .collection::<User>(COLLECTION_USERS)
-        .find(doc! {}, None)
-        .await?;
-    Ok(cursor.try_collect().await?)
-}
+// pub async fn find_all(db: &Database) -> Result<Vec<User>, InternalError> {
+// let cursor = db
+// .collection::<User>(COLLECTION_USERS)
+// .find(doc! {}, None)
+// .await?;
+// Ok(cursor.try_collect().await?)
+// }
 
 pub async fn find_all_with_query(cond: &User, db: &Database) -> Result<Vec<User>, InternalError> {
     let find_opts = FindOptions::builder().sort(doc! {ID: 1}).build();
@@ -73,12 +72,10 @@ pub async fn insert_one(user: &User, db: &Database) -> Result<User, InternalErro
         .insert_one(user, None)
         .await?;
 
-    let ret = from_bson(res.inserted_id).and_then(|id: Uuid| {
+    Ok(from_bson(res.inserted_id).map(|id: Uuid| {
         ret.id = Some(id);
-        Ok(ret)
-    })?;
-
-    Ok(ret)
+        ret
+    })?)
 }
 
 pub async fn update_by_id(user: &User, db: &Database) -> Result<u64, InternalError> {

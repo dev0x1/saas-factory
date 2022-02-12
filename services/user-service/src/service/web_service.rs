@@ -15,12 +15,13 @@ pub async fn start_web_service(
         configuration.application.host, configuration.application.port
     );
 
-    let db_client = db_mongo::connect(&app_name, &configuration.db)
+    let db_client = db_mongo::connect(app_name, &configuration.db)
         .await
         .expect("db client connection failure");
 
-    // Instantiate the application context. This application state will be cloned for each Actix thread but
-    // the Arc of the DbContext will be reused in each Actix thread.
+    // Instantiate the application context. This application state will be
+    // cloned for each Actix thread but the Arc of the DbContext will be
+    // reused in each Actix thread.
     let app_context = web::Data::new(AppContext {
         db: Arc::new(db_client),
     });
@@ -33,8 +34,8 @@ pub async fn start_web_service(
 
     let server = HttpServer::new(move || {
         App::new()
-        .app_data(app_context.clone())
-        .app_data(json_extractor_config(4096))
+            .app_data(app_context.clone())
+            .app_data(json_extractor_config(4096))
             .wrap(TracingLogger::default())
             .wrap(RequestTracing::new())
             // Enable Governor middleware

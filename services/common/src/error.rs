@@ -1,9 +1,13 @@
 use actix_http::{
-    error::PayloadError,
+    error::{BlockingError, PayloadError},
     header::{InvalidHeaderName, InvalidHeaderValue},
 };
 use actix_web::{
-    error::JsonPayloadError, http::StatusCode, HttpResponse, HttpResponseBuilder, ResponseError,
+    error::JsonPayloadError,
+    http::StatusCode,
+    HttpResponse,
+    HttpResponseBuilder,
+    ResponseError,
 };
 use awc::error::SendRequestError;
 
@@ -26,30 +30,32 @@ lazy_static! {
     pub static ref REDACTED_ERRORS: RwLock<bool> = RwLock::new(true);
 }
 
+/// An error type used throughout the services code which can be converted into
+/// a HTTP error response.
 ///
-/// An error type used throughout the services code which can be converted into a HTTP error response.
+/// All possible library or system errors are converted into one of these
+/// InternalErrors so our code can have a clean Result<blah, InternalError>
+/// signature declaration and avoids excessive use or operation.await.
+/// map_err(|err| blah) type call.
 ///
-/// All possible library or system errors are converted into one of these InternalErrors so our code
-/// can have a clean Result<blah, InternalError> signature declaration and avoids excessive use or
-/// operation.await.map_err(|err| blah) type call.
-///
-/// Conversion from a source error to an InternalError is done futher below with a series of From<T>
-/// trait implementations.
-///
+/// Conversion from a source error to an InternalError is done futher below with
+/// a series of From<T> trait implementations.
 #[derive(Clone, Debug, Display, Error)]
 pub enum InternalError {
     #[display(fmt = "Db error: {}", cause)]
     DbError { cause: String },
 
     #[display(
-        fmt = "Db schema needs to be v{} but it is v{} - try running with UPDATE_SCHEMA_ENABLED set",
+        fmt = "Db schema needs to be v{} but it is v{} - try running with UPDATE_SCHEMA_ENABLED \
+               set",
         code_version,
         db_version
     )]
     DbSchemaError { code_version: i32, db_version: i32 },
 
     #[display(
-        fmt = "Db is locked for schema updating. Either another instance has locked it and is taking a long time or a previous update crashed and left the lock in place. {}",
+        fmt = "Db is locked for schema updating. Either another instance has locked it and is \
+               taking a long time or a previous update crashed and left the lock in place. {}",
         cause
     )]
     DbLockedForUpdate { cause: String },
@@ -62,6 +68,9 @@ pub enum InternalError {
         cause
     )]
     DbDuplicateError { cause: String },
+
+    #[display(fmt = "Failed to execute the task on blocking thread: {}", cause)]
+    BlockingTaskExecutionError { cause: String },
 
     #[display(fmt = "Request format invalid: {}", reason)]
     RequestFormatError { reason: String },
@@ -100,7 +109,7 @@ pub enum InternalError {
 impl InternalError {
     fn error_code(&self) -> u16 {
         match *self {
-            InternalError::InvalidFormatError { cause: _ } => 0400,
+            InternalError::InvalidFormatError { cause: _ } => 400,
             InternalError::InvalidClaim { claim: _ } => 1000,
             InternalError::RemoteRequestError { cause: _, url: _ } => 1005,
             InternalError::RequestFormatError { reason: _ } => 1010,
@@ -119,13 +128,12 @@ impl InternalError {
             InternalError::UserNotFound { user_id: _ } => 2509,
             InternalError::SendNotificationError { cause: _ } => 2920,
             InternalError::SendRequestError { cause: _ } => 3000,
+            InternalError::BlockingTaskExecutionError { cause: _ } => 3100,
         }
     }
 
-    ///
     /// Only 400 (bad request) responses can return an error message field.
     /// It is then controlled via the global redaction flag.
-    ///
     fn redacted_errors(&self) -> bool {
         if self.status_code() != StatusCode::BAD_REQUEST {
             return true;
@@ -158,6 +166,9 @@ impl ResponseError for InternalError {
             InternalError::UserNotFound { user_id: _ } => StatusCode::UNPROCESSABLE_ENTITY,
             InternalError::SendNotificationError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::SendRequestError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::BlockingTaskExecutionError { cause: _ } => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         }
     }
 
@@ -180,6 +191,14 @@ impl ResponseError for InternalError {
     }
 }
 
+impl From<BlockingError> for InternalError {
+    fn from(err: BlockingError) -> Self {
+        InternalError::BlockingTaskExecutionError {
+            cause: err.to_string(),
+        }
+    }
+}
+
 impl<T> From<SendError<T>> for InternalError {
     fn from(err: SendError<T>) -> Self {
         InternalError::SendNotificationError {
@@ -190,15 +209,13 @@ impl<T> From<SendError<T>> for InternalError {
 
 impl From<mongodb::error::Error> for InternalError {
     fn from(error: mongodb::error::Error) -> Self {
-        if let ErrorKind::Write(write_failure) = &*error.kind {
-            if let WriteFailure::WriteError(write_error) = write_failure {
-                if write_error.code == 11000
-                /* Duplicate key violation */
-                {
-                    return InternalError::DbDuplicateError {
-                        cause: error.to_string(),
-                    };
-                }
+        if let ErrorKind::Write(WriteFailure::WriteError(write_error)) = &*error.kind {
+            if write_error.code == 11000
+            // Duplicate key violation
+            {
+                return InternalError::DbDuplicateError {
+                    cause: error.to_string(),
+                };
             }
         }
 

@@ -1,8 +1,7 @@
 use mongodb::bson::{self, doc, Bson};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::fmt;
-use std::fmt::Formatter;
+use std::{fmt, fmt::Formatter};
 use strum::{Display, EnumString};
 
 pub mod prelude {
@@ -21,17 +20,7 @@ pub mod prelude {
     pub const UPDATED_AT: &str = "UPDATED_AT";
 }
 
-#[derive(
-    Copy,
-    Clone,
-    Eq,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Debug,
-    Display,
-    EnumString
-)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Debug, Display, EnumString)]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum UserStatus {
     Active,
@@ -47,17 +36,7 @@ impl From<UserStatus> for Bson {
     }
 }
 
-#[derive(
-    Copy,
-    Clone,
-    Eq,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Debug,
-    Display,
-    EnumString
-)]
+#[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Debug, Display, EnumString)]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum UserRole {
     Admin,

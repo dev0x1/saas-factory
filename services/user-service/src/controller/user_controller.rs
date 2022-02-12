@@ -1,6 +1,7 @@
 use actix_web::{
     web::{self},
-    HttpResponse, Scope,
+    HttpResponse,
+    Scope,
 };
 use bson::Uuid;
 use chrono::Utc;
@@ -22,9 +23,7 @@ pub fn router() -> Scope {
     )
 }
 
-///
 /// Http handler for querying users.
-///
 #[tracing::instrument(name = "query", skip(user), level = "info")]
 pub async fn query(ctx: web::Data<AppContext>, web::Query(user): web::Query<User>) -> ApiResult {
     match user.id {
@@ -53,9 +52,7 @@ async fn get_by_condition(ctx: web::Data<AppContext>, user: User) -> ApiResult {
         .json(users))
 }
 
-///
 /// Http handler for creating an user.
-///
 #[tracing::instrument(name = "create", skip(user), level = "info")]
 pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiResult {
     // verify necessary fields
@@ -82,9 +79,7 @@ pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiRes
         .json(user))
 }
 
-///
 /// Http handler for updating an user.
-///
 #[tracing::instrument(name = "update_by_id", skip(user), level = "info")]
 pub async fn update_by_id(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiResult {
     // verify necessary fields
@@ -99,9 +94,7 @@ pub async fn update_by_id(ctx: web::Data<AppContext>, user: web::Json<User>) -> 
     Ok(HttpResponse::Ok().finish())
 }
 
-///
 /// Http handler for deleting an user.
-///
 #[tracing::instrument(name = "delete_by_id", skip(user), level = "info")]
 pub async fn delete_by_id(
     ctx: web::Data<AppContext>,

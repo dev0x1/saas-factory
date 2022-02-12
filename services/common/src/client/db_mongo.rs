@@ -4,7 +4,8 @@ use crate::error::InternalError;
 use mongodb::{
     bson::{doc, Document},
     options::ClientOptions,
-    Client, Database,
+    Client,
+    Database,
 };
 use tracing::info;
 

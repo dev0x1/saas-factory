@@ -17,8 +17,9 @@ pub fn load_configuration<'a, T: serde::Deserialize<'a>>() -> Result<T, config::
         config::File::from(configuration_directory.join(environment.as_str())).required(true),
     )?;
 
-    // Add in settings from environment variables (with a prefix of MYPASS and '_' as separator)
-    // E.g. `MYPASS_APPLICATION_PORT=5001 would set `Settings.application.port`
+    // Add in settings from environment variables (with a prefix of MYPASS and
+    // '_' as separator) E.g. `MYPASS_APPLICATION_PORT=5001 would set
+    // `Settings.application.port`
     settings.merge(config::Environment::with_prefix("mypass").separator("_"))?;
 
     settings.try_into()
