@@ -10,11 +10,16 @@ user_name = "user"
 password = "password"
 host = "mongodb"
 port = "27017"
-database_name = "account"
+database_name = "users"
+
+[cache]
+host = "redis"
+port = "6379"
 
 [rate_limit]
 burst_size = 5
 frequency = 2
 
 [tracer.jaeger]
-url = "jaeger:6831"
+host = "jaeger"
+port = "6831"

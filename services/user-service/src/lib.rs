@@ -15,7 +15,11 @@ pub async fn server() -> Result<(), std::io::Error> {
     let settings = Settings::load().expect("Failed to read configuration.");
     *REDACTED_ERRORS.write() = settings.log.redacted_errors;
 
-    telemetry::config_telemetry(&app_name, &settings.tracer.jaeger.url);
+    let jaeger_url = format!(
+        "{}:{}",
+        &settings.tracer.jaeger.host, &settings.tracer.jaeger.port,
+    );
+    telemetry::config_telemetry(&app_name, &jaeger_url);
 
     // Start Web server
     service::start_web_service(&app_name, settings).await?;

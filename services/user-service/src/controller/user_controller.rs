@@ -9,7 +9,12 @@ use common::error::{ApiResult, InternalError};
 
 use crate::{
     context::AppContext,
-    model::domain::user::{User, UserRole, UserStatus},
+    model::domain::user::{
+        prelude::{CACHE_KEY_PREFIX_USER_ID, CACHE_USER_EXPIRY},
+        User,
+        UserRole,
+        UserStatus,
+    },
     repository::user_repository,
 };
 
@@ -33,15 +38,25 @@ pub async fn query(ctx: web::Data<AppContext>, web::Query(user): web::Query<User
 }
 
 async fn get_by_id(ctx: web::Data<AppContext>, id: &Uuid) -> ApiResult {
-    let user = user_repository::find_by_id(id, ctx.db()).await?;
+    let cache_key_user_id = format!("{CACHE_KEY_PREFIX_USER_ID}_{id}");
 
-    match user {
+    match ctx.cache().get::<User>(&cache_key_user_id).await? {
         Some(user) => Ok(HttpResponse::Ok()
             .content_type("application/json")
             .json(user)),
-        None => Err(InternalError::UserNotFound {
-            user_id: id.to_uuid_0_8(),
-        }),
+        None => match user_repository::find_by_id(id, ctx.db()).await? {
+            Some(user) => {
+                ctx.cache()
+                    .set::<User>(&cache_key_user_id, user.clone(), CACHE_USER_EXPIRY)
+                    .await?;
+                Ok(HttpResponse::Ok()
+                    .content_type("application/json")
+                    .json(user))
+            }
+            None => Err(InternalError::UserNotFound {
+                user_id: id.to_uuid_0_8(),
+            }),
+        },
     }
 }
 

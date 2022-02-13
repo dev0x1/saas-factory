@@ -1,10 +1,14 @@
-use common::{client::db_mongo::MongoClientSettings, util::configuration};
+use common::{
+    client::{cache_redis::RedisClientSettings, db_mongo::MongoClientSettings},
+    util::configuration,
+};
 use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Settings {
     pub application: ApplicationSettings,
     pub db: MongoClientSettings,
+    pub cache: RedisClientSettings,
     pub log: LogSettings,
     pub rate_limit: RateLimitingSettings,
     pub tracer: Tracer,
@@ -12,9 +16,9 @@ pub struct Settings {
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct ApplicationSettings {
+    pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-    pub host: String,
     pub base_url: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub workers: usize,
@@ -37,7 +41,9 @@ pub struct Tracer {
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Jaeger {
-    pub url: String,
+    pub host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]

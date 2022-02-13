@@ -44,6 +44,10 @@ mongodb = { version = "2.1.0", optional = true, features = ["bson-chrono-0_4", "
 chrono = { version = "0.4.19", features = ["serde"] }
 futures = "0.3.15"
 
+# cache
+redis = { version = "0.21.5", features = ["tokio-comp"] }
+deadpool-redis = { version = "0.10.2", features = ["serde"] }
+
 # misc
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 derive_more = "0.99.14"

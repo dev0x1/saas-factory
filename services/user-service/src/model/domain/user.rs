@@ -1,4 +1,5 @@
 use mongodb::bson::{self, doc, Bson};
+use redis::{FromRedisValue, RedisResult, RedisWrite, ToRedisArgs, Value};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{fmt, fmt::Formatter};
@@ -18,6 +19,10 @@ pub mod prelude {
     pub const ROLE: &str = "ROLE";
     pub const CREATED_AT: &str = "CREATED_AT";
     pub const UPDATED_AT: &str = "UPDATED_AT";
+
+    // Cache keys
+    pub const CACHE_KEY_PREFIX_USER_ID: &str = "_id";
+    pub const CACHE_USER_EXPIRY: usize = 600;
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Debug, Display, EnumString)]
@@ -76,6 +81,31 @@ pub struct User {
     // #[serde_as(as = "Option<bson::DateTime>")]
     #[serde(rename = "UPDATED_AT")]
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+impl ToRedisArgs for User {
+    fn write_redis_args<W>(&self, output: &mut W)
+    where
+        W: ?Sized + RedisWrite,
+    {
+        output.write_arg_fmt(serde_json::to_string(self).unwrap());
+    }
+}
+
+impl FromRedisValue for User {
+    fn from_redis_value(value: &Value) -> RedisResult<Self> {
+        match *value {
+            redis::Value::Data(ref value_slice) => match serde_json::from_slice(value_slice) {
+                Err(_) => Err((redis::ErrorKind::TypeError, "Can't serialize value").into()),
+                Ok(user) => Ok(user),
+            },
+            _ => Err((
+                redis::ErrorKind::ResponseError,
+                "Response type not Profile compatible.",
+            )
+                .into()),
+        }
+    }
 }
 
 impl fmt::Display for User {

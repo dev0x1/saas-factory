@@ -2,7 +2,13 @@ use crate::{context::AppContext, controller, settings::Settings};
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_web_opentelemetry::RequestTracing;
-use common::{client::db_mongo, util::actix_json_config::json_extractor_config};
+use common::{
+    client::{
+        cache_redis::{self, Cache, CachePool},
+        db_mongo,
+    },
+    util::actix_json_config::json_extractor_config,
+};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 
@@ -19,11 +25,15 @@ pub async fn start_web_service(
         .await
         .expect("db client connection failure");
 
+    let cache_pool: CachePool = cache_redis::connect(&configuration.cache)?;
+    let cache_client: Cache = cache_redis::Cache::new(cache_pool);
+
     // Instantiate the application context. This application state will be
     // cloned for each Actix thread but the Arc of the DbContext will be
     // reused in each Actix thread.
     let app_context = web::Data::new(AppContext {
         db: Arc::new(db_client),
+        cache: Arc::new(cache_client),
     });
 
     let governor_conf = GovernorConfigBuilder::default()

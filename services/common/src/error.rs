@@ -19,6 +19,7 @@ use mongodb::{
     error::{ErrorKind, WriteFailure},
 };
 use parking_lot::RwLock;
+use redis::RedisError;
 use serde_json::json;
 use tracing::error;
 use url::ParseError;
@@ -68,6 +69,15 @@ pub enum InternalError {
         cause
     )]
     DbDuplicateError { cause: String },
+
+    #[display(fmt = "Failed to create cache client pool: {}", cause)]
+    CacheClientCreationError { cause: String },
+
+    #[display(fmt = "Failed to connect to cache server: {}", cause)]
+    CacheClientConnectionError { cause: String },
+
+    #[display(fmt = "Cache operation failed: {}", cause)]
+    CacheOperationError { cause: String },
 
     #[display(fmt = "Failed to execute the task on blocking thread: {}", cause)]
     BlockingTaskExecutionError { cause: String },
@@ -121,8 +131,11 @@ impl InternalError {
             InternalError::DbLockedForUpdate { cause: _ } => 2003,
             InternalError::DbUpdateEmpty => 2004,
             InternalError::DbDuplicateError { cause: _ } => 2005,
-            InternalError::InvalidBsonError { cause: _ } => 2006,
-            InternalError::InvalidJsonError { cause: _ } => 2105,
+            InternalError::CacheClientCreationError { cause: _ } => 2100,
+            InternalError::CacheClientConnectionError { cause: _ } => 2101,
+            InternalError::CacheOperationError { cause: _ } => 2102,
+            InternalError::InvalidJsonError { cause: _ } => 2200,
+            InternalError::InvalidBsonError { cause: _ } => 2210,
             InternalError::InvalidUrl { cause: _ } => 2150,
             InternalError::BsonAccessError { cause: _ } => 2207,
             InternalError::UserNotFound { user_id: _ } => 2509,
@@ -158,6 +171,13 @@ impl ResponseError for InternalError {
             InternalError::DbError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::DbUpdateEmpty => StatusCode::BAD_REQUEST,
             InternalError::DbDuplicateError { cause: _ } => StatusCode::BAD_REQUEST,
+            InternalError::CacheClientCreationError { cause: _ } => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            InternalError::CacheClientConnectionError { cause: _ } => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            InternalError::CacheOperationError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::RequestFormatError { reason: _ } => StatusCode::BAD_REQUEST,
             InternalError::InvalidUrl { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::InvalidJsonError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
@@ -220,6 +240,30 @@ impl From<mongodb::error::Error> for InternalError {
         }
 
         InternalError::DbError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+impl From<deadpool_redis::CreatePoolError> for InternalError {
+    fn from(error: deadpool_redis::CreatePoolError) -> Self {
+        InternalError::CacheClientCreationError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+impl From<deadpool_redis::PoolError> for InternalError {
+    fn from(error: deadpool_redis::PoolError) -> Self {
+        InternalError::CacheClientConnectionError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+impl From<RedisError> for InternalError {
+    fn from(error: RedisError) -> Self {
+        InternalError::CacheOperationError {
             cause: error.to_string(),
         }
     }

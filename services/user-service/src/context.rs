@@ -1,3 +1,4 @@
+use common::client::cache_redis::Cache;
 use mongodb::Database;
 use std::sync::Arc;
 
@@ -6,6 +7,7 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub struct AppContext {
     pub(crate) db: Arc<Database>,
+    pub(crate) cache: Arc<Cache>,
 }
 
 impl AppContext {
@@ -13,5 +15,10 @@ impl AppContext {
     /// collections, etc.
     pub fn db(&self) -> &Database {
         &self.db
+    }
+
+    /// A Redis cache pool.
+    pub fn cache(&self) -> &Cache {
+        &self.cache
     }
 }

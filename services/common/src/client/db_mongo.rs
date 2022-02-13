@@ -1,4 +1,4 @@
-use secrecy::ExposeSecret;
+use secrecy::{ExposeSecret, Secret};
 
 use crate::error::InternalError;
 use mongodb::{
@@ -9,7 +9,6 @@ use mongodb::{
 };
 use tracing::info;
 
-use secrecy::Secret;
 use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Debug, serde::Deserialize, Clone)]

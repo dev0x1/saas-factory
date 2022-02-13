@@ -24,6 +24,10 @@ bson = { version = "2.1.0", features = ["serde_with"] }
 futures = "0.3.15"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 
+# cache
+redis = { version = "0.21.5", features = ["tokio-comp"] }
+deadpool-redis = { version = "0.10.2", features = ["serde"] }
+
 # message packing
 serde = "1.0.115"
 serde-aux = "3"
