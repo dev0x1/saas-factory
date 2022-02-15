@@ -14,6 +14,8 @@ use awc::error::SendRequestError;
 use crossbeam_channel::SendError;
 use derive_more::{Display, Error};
 use lazy_static::lazy_static;
+
+#[cfg(feature = "mongo")]
 use mongodb::{
     bson::{self, document::ValueAccessError},
     error::{ErrorKind, WriteFailure},
@@ -227,6 +229,7 @@ impl<T> From<SendError<T>> for InternalError {
     }
 }
 
+#[cfg(feature = "mongo")]
 impl From<mongodb::error::Error> for InternalError {
     fn from(error: mongodb::error::Error) -> Self {
         if let ErrorKind::Write(WriteFailure::WriteError(write_error)) = &*error.kind {
@@ -240,6 +243,24 @@ impl From<mongodb::error::Error> for InternalError {
         }
 
         InternalError::DbError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+#[cfg(feature = "mongo")]
+impl From<bson::ser::Error> for InternalError {
+    fn from(error: bson::ser::Error) -> Self {
+        InternalError::InvalidBsonError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+#[cfg(feature = "mongo")]
+impl From<bson::de::Error> for InternalError {
+    fn from(error: bson::de::Error) -> Self {
+        InternalError::InvalidBsonError {
             cause: error.to_string(),
         }
     }
@@ -269,22 +290,6 @@ impl From<RedisError> for InternalError {
     }
 }
 
-impl From<bson::ser::Error> for InternalError {
-    fn from(error: bson::ser::Error) -> Self {
-        InternalError::InvalidBsonError {
-            cause: error.to_string(),
-        }
-    }
-}
-
-impl From<bson::de::Error> for InternalError {
-    fn from(error: bson::de::Error) -> Self {
-        InternalError::InvalidBsonError {
-            cause: error.to_string(),
-        }
-    }
-}
-
 impl From<serde_json::Error> for InternalError {
     fn from(error: serde_json::Error) -> Self {
         InternalError::InvalidJsonError {
@@ -299,6 +304,7 @@ impl From<InternalError> for std::io::Error {
     }
 }
 
+#[cfg(feature = "mongo")]
 impl From<ValueAccessError> for InternalError {
     fn from(error: ValueAccessError) -> Self {
         InternalError::BsonAccessError {
