@@ -1,0 +1,61 @@
+[advisories]
+vulnerability = "deny"
+unmaintained = "deny"
+notice = "deny"
+unsound = "deny"
+ignore = [
+    # Potential segfault in the time crate
+    # https://rustsec.org/advisories/RUSTSEC-2020-0071
+    "RUSTSEC-2020-0071",
+
+    # Potential segfault in `localtime_r` invocations
+    # https://rustsec.org/advisories/RUSTSEC-2020-0159
+    "RUSTSEC-2020-0159"
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+
+[licenses]
+unlicensed = "warn"
+copyleft = "deny"
+default = "deny"
+allow-osi-fsf-free = "neither"
+confidence-threshold = 0.8
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Unlicense",
+  "Zlib",
+  "MPL-2.0",
+  "ISC",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+]
+exceptions = [
+    # ring uses code from multiple libraries but all with permissive licenses
+    # https://tldrlegal.com/license/openssl-license-(openssl)
+    { allow = ["ISC", "MIT", "OpenSSL"], name = "ring" },
+
+]
+
+[[licenses.clarify]]
+name = "ring"
+# SPDX considers OpenSSL to encompass both the OpenSSL and SSLeay licenses
+# https://spdx.org/licenses/OpenSSL.html
+# ISC - Both BoringSSL and ring use this for their new files
+# MIT - "Files in third_party/ have their own licenses, as described therein. The MIT
+# license, for third_party/fiat, which, unlike other third_party directories, is
+# compiled into non-test libraries, is included below."
+# OpenSSL - Obviously
+expression = "ISC AND MIT AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+

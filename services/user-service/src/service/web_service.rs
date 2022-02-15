@@ -1,5 +1,4 @@
 use crate::{context::AppContext, controller, settings::Settings};
-use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_web_opentelemetry::RequestTracing;
 use common::{
@@ -36,12 +35,6 @@ pub async fn start_web_service(
         cache: Arc::new(cache_client),
     });
 
-    let governor_conf = GovernorConfigBuilder::default()
-        .per_second(configuration.rate_limit.frequency)
-        .burst_size(configuration.rate_limit.burst_size)
-        .finish()
-        .unwrap();
-
     let server = HttpServer::new(move || {
         App::new()
             .app_data(app_context.clone())
@@ -49,7 +42,6 @@ pub async fn start_web_service(
             .wrap(TracingLogger::default())
             .wrap(RequestTracing::new())
             // Enable Governor middleware
-            .wrap(Governor::new(&governor_conf))
             .service(web::scope("/api/v1.0").configure(controller::global_router))
             .default_service(web::get().to(not_found))
     })
