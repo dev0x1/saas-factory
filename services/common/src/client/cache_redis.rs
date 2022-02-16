@@ -1,24 +1,36 @@
-use std::fmt::{self, Debug};
-
+use crate::error::InternalError;
 use deadpool_redis::{Config as RedisConfig, Connection, Pool, Runtime};
 use redis::{AsyncCommands, FromRedisValue, RedisResult, ToRedisArgs};
-use tracing::info;
-
-use crate::error::InternalError;
-
+use secrecy::{ExposeSecret, Secret};
+use serde::{Deserialize, Serialize};
 use serde_aux::field_attributes::deserialize_number_from_string;
+use std::fmt::{self, Debug};
+use tracing::info;
 
 pub type CachePool = Pool;
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RedisClientSettings {
+    pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-    pub host: String,
 }
 
-pub fn connect(config: &RedisClientSettings) -> Result<CachePool, InternalError> {
-    let redis_server_url = format!("redis://{}:{}", config.host, config.port,);
+#[derive(Debug, Deserialize, Clone)]
+pub struct RedisClientSecrets {
+    pub password: Secret<String>,
+}
+
+pub fn connect(
+    config: &RedisClientSettings,
+    secrets: &RedisClientSecrets,
+) -> Result<CachePool, InternalError> {
+    let redis_server_url = format!(
+        "redis://:{}@{}:{}",
+        secrets.password.expose_secret(),
+        config.host,
+        config.port,
+    );
 
     let redis_config = RedisConfig {
         url: Some(redis_server_url),

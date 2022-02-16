@@ -3,3 +3,4 @@ pub mod cache_redis;
 pub mod db_mongo;
 #[cfg(feature = "postgres")]
 pub mod db_postgres;
+pub mod sm_vault;

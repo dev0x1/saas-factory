@@ -21,7 +21,7 @@ serde_json = "1.0"
 # configuration
 config = { version = "0.11", default-features = false, features = ["toml"] }
 
-# Tracing
+# tracing
 tracing = "0.1.29"
 tracing-appender = "0.2"
 tracing-futures = "0.2"
@@ -34,11 +34,9 @@ tracing-bunyan-formatter = "0.3"
 # database
 sqlx = { version = "0.5.10", features = ["runtime-actix-rustls", "uuid", "postgres", "chrono", "offline"], optional = true  }
 
-# secret assets
+# secrets management
+vaultrs = "0.5.4"
 secrecy = { version = "0.8", features = ["serde"] }
-
-# rest-calls
-url = "2.2.1"
 
 # mongodb
 mongodb = { version = "2.1.0", optional = true, features = ["bson-chrono-0_4", "bson-uuid-0_8"] }
@@ -48,6 +46,9 @@ futures = "0.3.15"
 # cache
 redis = { version = "0.21.5", features = ["tokio-comp"] }
 deadpool-redis = { version = "0.10.2", features = ["serde"] }
+
+# rest-calls
+url = "2.2.1"
 
 # misc
 uuid = { version = "0.8.2", features = ["serde", "v4"] }

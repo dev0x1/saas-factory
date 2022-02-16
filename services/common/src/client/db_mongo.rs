@@ -1,4 +1,5 @@
 use secrecy::{ExposeSecret, Secret};
+use serde::{Deserialize, Serialize};
 
 use crate::error::InternalError;
 use mongodb::{
@@ -11,24 +12,29 @@ use tracing::info;
 
 use serde_aux::field_attributes::deserialize_number_from_string;
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MongoClientSettings {
-    pub user_name: String,
-    pub password: Secret<String>,
+    pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-    pub host: String,
     pub database_name: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct MongoClientSecrets {
+    pub user_name: String,
+    pub password: Secret<String>,
 }
 
 pub async fn connect(
     app_name: &str,
     config: &MongoClientSettings,
+    secrets: &MongoClientSecrets,
 ) -> Result<Database, InternalError> {
     let mongo_server_url = format!(
         "mongodb://{}:{}@{}:{}",
-        config.user_name,
-        config.password.expose_secret(),
+        secrets.user_name,
+        secrets.password.expose_secret(),
         config.host,
         config.port,
     );

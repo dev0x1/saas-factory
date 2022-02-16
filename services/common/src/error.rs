@@ -10,10 +10,10 @@ use actix_web::{
     ResponseError,
 };
 use awc::error::SendRequestError;
-
 use crossbeam_channel::SendError;
 use derive_more::{Display, Error};
 use lazy_static::lazy_static;
+use vaultrs::client::VaultClientSettingsBuilderError;
 
 #[cfg(feature = "mongo")]
 use mongodb::{
@@ -72,6 +72,9 @@ pub enum InternalError {
     )]
     DbDuplicateError { cause: String },
 
+    #[display(fmt = "Vault client operation failed: {}", cause)]
+    VaultClientError { cause: String },
+
     #[display(fmt = "Failed to create cache client pool: {}", cause)]
     CacheClientCreationError { cause: String },
 
@@ -125,6 +128,7 @@ impl InternalError {
             InternalError::InvalidClaim { claim: _ } => 1000,
             InternalError::RemoteRequestError { cause: _, url: _ } => 1005,
             InternalError::RequestFormatError { reason: _ } => 1010,
+            InternalError::InvalidUrl { cause: _ } => 1030,
             InternalError::DbError { cause: _ } => 2001,
             InternalError::DbSchemaError {
                 code_version: _,
@@ -138,8 +142,8 @@ impl InternalError {
             InternalError::CacheOperationError { cause: _ } => 2102,
             InternalError::InvalidJsonError { cause: _ } => 2200,
             InternalError::InvalidBsonError { cause: _ } => 2210,
-            InternalError::InvalidUrl { cause: _ } => 2150,
-            InternalError::BsonAccessError { cause: _ } => 2207,
+            InternalError::BsonAccessError { cause: _ } => 2220,
+            InternalError::VaultClientError { cause: _ } => 2300,
             InternalError::UserNotFound { user_id: _ } => 2509,
             InternalError::SendNotificationError { cause: _ } => 2920,
             InternalError::SendRequestError { cause: _ } => 3000,
@@ -173,6 +177,7 @@ impl ResponseError for InternalError {
             InternalError::DbError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::DbUpdateEmpty => StatusCode::BAD_REQUEST,
             InternalError::DbDuplicateError { cause: _ } => StatusCode::BAD_REQUEST,
+            InternalError::VaultClientError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::CacheClientCreationError { cause: _ } => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
@@ -224,6 +229,22 @@ impl From<BlockingError> for InternalError {
 impl<T> From<SendError<T>> for InternalError {
     fn from(err: SendError<T>) -> Self {
         InternalError::SendNotificationError {
+            cause: err.to_string(),
+        }
+    }
+}
+
+impl From<VaultClientSettingsBuilderError> for InternalError {
+    fn from(err: VaultClientSettingsBuilderError) -> Self {
+        InternalError::VaultClientError {
+            cause: err.to_string(),
+        }
+    }
+}
+
+impl From<vaultrs::error::ClientError> for InternalError {
+    fn from(err: vaultrs::error::ClientError) -> Self {
+        InternalError::VaultClientError {
             cause: err.to_string(),
         }
     }

@@ -1,5 +1,9 @@
 use common::{
-    client::{cache_redis::RedisClientSettings, db_mongo::MongoClientSettings},
+    client::{
+        cache_redis::RedisClientSettings,
+        db_mongo::MongoClientSettings,
+        sm_vault::{VaultClientConfig, VaultKvPath},
+    },
     util::configuration,
 };
 use serde_aux::field_attributes::deserialize_number_from_string;
@@ -7,10 +11,12 @@ use serde_aux::field_attributes::deserialize_number_from_string;
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Settings {
     pub application: ApplicationSettings,
+    pub vault: VaultClientConfig,
     pub db: MongoClientSettings,
+    pub db_secrets_path: VaultKvPath,
     pub cache: RedisClientSettings,
+    pub cache_secrets_path: VaultKvPath,
     pub log: LogSettings,
-    pub rate_limit: RateLimitingSettings,
     pub tracer: Tracer,
 }
 
@@ -44,14 +50,6 @@ pub struct Jaeger {
     pub host: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
-}
-
-#[derive(Debug, serde::Deserialize, Clone)]
-pub struct RateLimitingSettings {
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub burst_size: u32,
-    #[serde(deserialize_with = "deserialize_number_from_string")]
-    pub frequency: u64,
 }
 
 impl Settings {
