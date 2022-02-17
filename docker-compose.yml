@@ -19,14 +19,34 @@ services:
     networks:
       - docker_net
 
-  vault:
-    image: vault:latest
-    container_name: vault
+  # Vault server UI can be viewed at http://localhost:8200/ui
+  vault-dev-server:
+    image: hashicorp/vault:latest
+    container_name: vault_dev_server
     restart: always
+    volumes:
+      - /vault/data
+      - /etc/vault/logs
     ports:
       - '8200:8200'
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: myroot
+      VAULT_DEV_ROOT_TOKEN_ID: 'token-root-dont-use-in-production'
+      VAULT_DEV_LISTEN_ADDRESS: '0.0.0.0:8200'
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - docker_net
+    entrypoint: "vault server -dev"
+
+  # Vault client to initialize secret engines and to inject secrets in vault-server
+  vault-dev-client:
+    container_name: vault_dev_client
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vault_client.dev
+    environment:
+      VAULT_ADDR: 'http://vault_dev_server:8200'
+      VAULT_DEV_ROOT_TOKEN_ID: 'token-root-dont-use-in-production'
     networks:
       - docker_net
 
@@ -35,6 +55,9 @@ services:
     container_name: 'mongodb'
     ports:
       - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'test_user'
+      MONGO_INITDB_ROOT_PASSWORD: 'test_password'
     networks:
       - docker_net
 
@@ -58,6 +81,7 @@ services:
     image: redis:latest
     container_name: redis
     restart: always
+    command: redis-server --requirepass test_password
     ports:
       - '6379:6379'
     networks:

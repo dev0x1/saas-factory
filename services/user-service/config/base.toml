@@ -5,22 +5,10 @@ base_url = "localhost"
 workers = 4
 max_json_payload_size = 4096
 
-[vault]
-server_url = "vault"
-token = "myroot"
-
-[db_secrets_path]
-mount = "user-service-db"
-path = "mongo"
-
 [db]
 host = "mongodb"
 port = "27017"
 database_name = "users"
-
-[cache_secrets_path]
-mount = "user-service-kv"
-path = "redis"
 
 [cache]
 host = "redis"
