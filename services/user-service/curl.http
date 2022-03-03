@@ -1,18 +1,18 @@
-@host=http://localhost:8001/api/v1.0
+@api_endpoint=http://localhost:8001/user/v1.0
 
 ###
 # @name health
-GET {{host}}/health
+GET {{api_endpoint}}/health
 
 
 ###
 # @name get_user_by_id_should_fail
-GET {{host}}/user?_id=12345678123456781234567812345678
+GET {{api_endpoint}}?_id=12345678123456781234567812345678
 
 
 ###
 # @name create_user1
-POST {{host}}/user
+POST {{api_endpoint}}
 Content-Type: application/json
 
 {
@@ -21,7 +21,7 @@ Content-Type: application/json
 
 ###
 # @name create_user2
-POST {{host}}/user
+POST {{api_endpoint}}
 Content-Type: application/json
 
 {
@@ -30,7 +30,7 @@ Content-Type: application/json
 
 ###
 # @name create_user_invalid_format_fail
-POST {{host}}/user
+POST {{api_endpoint}}
 Content-Type: application/json
 
 {
@@ -39,11 +39,11 @@ Content-Type: application/json
 
 ###
 # @name get_user_by_email
-GET {{host}}/user?EMAIL=user1@mail.com
+GET {{api_endpoint}}?EMAIL=user1@mail.com
 
 ###
 # @name update_user_by_id
-PUT {{host}}/user
+PUT {{api_endpoint}}
 Content-Type: application/json
 
 {
@@ -53,20 +53,20 @@ Content-Type: application/json
 
 ###
 # @name get_user_by_email
-GET {{host}}/user?EMAIL=user1@mail.com
+GET {{api_endpoint}}?EMAIL=user1@mail.com
 
 ###
 # @name get_user_by_email
-GET {{host}}/user?EMAIL=user1.updated@mail.com
+GET {{api_endpoint}}?EMAIL=user1.updated@mail.com
 
 ###
 # @name get_user_by_email
-GET {{host}}/user?EMAIL=user2@mail.com
+GET {{api_endpoint}}?EMAIL=user2@mail.com
 
 ###
 # @name get_all_users
-GET {{host}}/user
+GET {{api_endpoint}}
 
 ###
 # @name get_user_by_id
-GET {{host}}/user?_id=70276e81-9ac4-4613-b066-770077a80bfc
+GET {{api_endpoint}}?_id=70276e81-9ac4-4613-b066-770077a80bfc

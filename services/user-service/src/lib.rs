@@ -72,7 +72,7 @@ pub async fn start_web_service(
             .app_data(json_extractor_config(4096))
             .wrap(TracingLogger::default())
             .wrap(RequestTracing::new())
-            .service(web::scope("/api/v1.0").configure(controller::global_router))
+            .service(web::scope("/user/v1.0").configure(controller::global_router))
             .default_service(web::get().to(not_found))
     })
     .bind(&this_server_address)?;

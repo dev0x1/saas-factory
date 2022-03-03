@@ -8,7 +8,7 @@ max_json_payload_size = 4096
 [db]
 host = "mongodb"
 port = "27017"
-database_name = "users"
+database_name = "user_db"
 
 [cache]
 host = "redis"

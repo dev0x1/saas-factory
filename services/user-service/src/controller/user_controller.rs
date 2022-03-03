@@ -1,7 +1,6 @@
 use actix_web::{
     web::{self},
     HttpResponse,
-    Scope,
 };
 use bson::Uuid;
 use chrono::Utc;
@@ -18,14 +17,14 @@ use crate::{
     repository::user_repository,
 };
 
-pub fn router() -> Scope {
-    web::scope("/user").service(
+pub fn router(cfg: &mut web::ServiceConfig) {
+    cfg.service(
         web::resource("")
             .route(web::get().to(query))
             .route(web::post().to(create))
             .route(web::put().to(update_by_id))
             .route(web::delete().to(delete_by_id)),
-    )
+    );
 }
 
 /// Http handler for querying users.
