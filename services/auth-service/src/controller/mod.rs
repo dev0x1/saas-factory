@@ -1,5 +1,6 @@
 mod health_controller;
+mod login_controller;
 mod router;
-mod auth_controller;
+mod user_controller;
 
 pub use router::global_router;
