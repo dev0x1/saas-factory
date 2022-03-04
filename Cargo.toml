@@ -2,5 +2,6 @@
 
 members = [
     "services/common",
+    "services/auth-service",
     "services/user-service",
 ]

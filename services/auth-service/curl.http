@@ -1,0 +1,5 @@
+@api_endpoint="http://localhost:8001/auth/v1.0"
+
+###
+# @name health
+GET {{api_endpoint}}/health

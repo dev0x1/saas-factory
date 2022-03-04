@@ -1,12 +1,12 @@
 version: "3.8"
 
 services:
-  # User service
-  user-service:
-    container_name: 'user_service'
+  # Auth service
+  auth-service:
+    container_name: 'auth_service'
     build:
       context: .
-      dockerfile: services/user-service/Dockerfile.dev
+      dockerfile: services/auth-service/Dockerfile.dev
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:8001/" ]
@@ -16,6 +16,34 @@ services:
       retries: 3
     ports:
       - '8001:8001'
+    depends_on:
+      - vault-dev-server
+      - mongodb
+      - jaeger
+      - redis
+    networks:
+      - docker_net
+
+  # User service
+  user-service:
+    container_name: 'user_service'
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile.dev
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8002/" ]
+      interval: 1m
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    ports:
+      - '8002:8002'
+    depends_on:
+      - vault-dev-server
+      - mongodb
+      - jaeger
+      - redis
     networks:
       - docker_net
 
@@ -47,6 +75,8 @@ services:
     environment:
       VAULT_ADDR: 'http://vault_dev_server:8200'
       VAULT_DEV_ROOT_TOKEN_ID: 'token-root-dont-use-in-production'
+    depends_on:
+      - vault-dev-server
     networks:
       - docker_net
 

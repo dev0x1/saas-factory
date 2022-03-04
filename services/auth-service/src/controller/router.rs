@@ -1,6 +1,6 @@
 pub fn global_router(cfg: &mut actix_web::web::ServiceConfig) {
     use super::*;
 
-    cfg.service(user_controller::router());
+    auth_controller::router(cfg);
     cfg.service(health_controller::router());
 }

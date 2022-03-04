@@ -1,0 +1,11 @@
+target
+rustfmt.toml
+.vscode
+.git
+.gitignore
+.DS_Store
+.dockerignore
+Dockerfile*
+docker-compose*
+*.md
+LICENSE*

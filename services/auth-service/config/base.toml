@@ -1,6 +1,6 @@
 [application]
-port = 8002
-host = "user_service"
+port = 8001
+host = "auth_service"
 base_url = "localhost"
 workers = 4
 max_json_payload_size = 4096
@@ -8,7 +8,7 @@ max_json_payload_size = 4096
 [db]
 host = "mongodb"
 port = "27017"
-database_name = "user_db"
+database_name = "auth_db"
 
 [cache]
 host = "redis"

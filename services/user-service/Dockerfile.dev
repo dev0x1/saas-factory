@@ -39,4 +39,4 @@ ENV RUST_BACKTRACE=$RUST_BACKTRACE
 ARG RUST_LOG="info, actix_web=info, actix_server=info, actix_http=info"
 ENV RUST_LOG=$RUST_LOG
 ENTRYPOINT ["./user-service"]
-EXPOSE 8001
+EXPOSE 8002
