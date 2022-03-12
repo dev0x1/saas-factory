@@ -4,9 +4,13 @@ use opentelemetry::{
     sdk::propagation::TraceContextPropagator,
 };
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_log::LogTracer;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 pub fn config_telemetry(app_name: &str, jaeger_url: &str) {
+    // Redirect all `log`'s events to tracing subscriber
+    LogTracer::init().expect("Failed to set logger");
+
     // Start a new Jaeger trace pipeline.
     // Spans are exported in batch - recommended setup for a production
     // application.

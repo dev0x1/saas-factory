@@ -45,6 +45,12 @@ lazy_static! {
 /// a series of From<T> trait implementations.
 #[derive(Clone, Debug, Display, Error)]
 pub enum InternalError {
+    #[display(fmt = "Primitive type conversion error")]
+    ConversionError,
+
+    #[display(fmt = "Parameter validation error: {}", cause)]
+    ParameterValidationError { cause: String },
+
     #[display(fmt = "Db error: {}", cause)]
     DbError { cause: String },
 
@@ -125,10 +131,12 @@ impl InternalError {
     fn error_code(&self) -> u16 {
         match *self {
             InternalError::InvalidFormatError { cause: _ } => 400,
-            InternalError::InvalidClaim { claim: _ } => 1000,
-            InternalError::RemoteRequestError { cause: _, url: _ } => 1005,
-            InternalError::RequestFormatError { reason: _ } => 1010,
-            InternalError::InvalidUrl { cause: _ } => 1030,
+            InternalError::ConversionError => 1000,
+            InternalError::ParameterValidationError { cause: _ } => 1050,
+            InternalError::InvalidClaim { claim: _ } => 1100,
+            InternalError::RemoteRequestError { cause: _, url: _ } => 1105,
+            InternalError::RequestFormatError { reason: _ } => 1110,
+            InternalError::InvalidUrl { cause: _ } => 1130,
             InternalError::DbError { cause: _ } => 2001,
             InternalError::DbSchemaError {
                 code_version: _,
@@ -164,6 +172,8 @@ impl InternalError {
 impl ResponseError for InternalError {
     fn status_code(&self) -> StatusCode {
         match *self {
+            InternalError::ConversionError => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::ParameterValidationError { cause: _ } => StatusCode::BAD_REQUEST,
             InternalError::InvalidFormatError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::InvalidClaim { claim: _ } => StatusCode::FORBIDDEN,
             InternalError::RemoteRequestError { cause: _, url: _ } => {
@@ -319,6 +329,12 @@ impl From<serde_json::Error> for InternalError {
     }
 }
 
+impl From<std::num::TryFromIntError> for InternalError {
+    fn from(_: std::num::TryFromIntError) -> Self {
+        InternalError::ConversionError
+    }
+}
+
 impl From<InternalError> for std::io::Error {
     fn from(error: InternalError) -> std::io::Error {
         std::io::Error::new(std::io::ErrorKind::Other, error.to_string())
@@ -361,6 +377,14 @@ impl From<SendRequestError> for InternalError {
 impl From<JsonPayloadError> for InternalError {
     fn from(error: JsonPayloadError) -> Self {
         InternalError::InvalidJsonError {
+            cause: error.to_string(),
+        }
+    }
+}
+
+impl From<validator::ValidationErrors> for InternalError {
+    fn from(error: validator::ValidationErrors) -> Self {
+        InternalError::ParameterValidationError {
             cause: error.to_string(),
         }
     }

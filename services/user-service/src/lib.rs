@@ -33,6 +33,8 @@ pub async fn server() -> Result<(), std::io::Error> {
     );
     telemetry::config_telemetry(&app_name, &jaeger_url);
 
+    tracing::info!("services starting...");
+
     // Start Web server
     start_web_service(&app_name, settings).await?;
     // Ensure all spans have been reported

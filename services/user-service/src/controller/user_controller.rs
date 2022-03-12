@@ -6,14 +6,18 @@ use actix_web::{
 use bson::Uuid;
 use chrono::Utc;
 use common::error::{ApiResult, InternalError};
+use validator::Validate;
 
 use crate::{
     context::AppContext,
-    model::domain::user::{
-        prelude::{CACHE_KEY_PREFIX_USER_ID, CACHE_USER_EXPIRY},
-        User,
-        UserRole,
-        UserStatus,
+    model::{
+        domain::user::{
+            prelude::{CACHE_KEY_PREFIX_USER_ID, CACHE_USER_EXPIRY},
+            User,
+            UserRole,
+            UserStatus,
+        },
+        request::page_request::{self, PageRequest},
     },
     repository::user_repository,
 };
@@ -21,7 +25,8 @@ use crate::{
 pub fn router() -> Scope {
     web::scope("/user").service(
         web::resource("")
-            .route(web::get().to(query))
+            //.route(web::get().to(query))
+            .route(web::get().to(query_paginated))
             .route(web::post().to(create))
             .route(web::put().to(update_by_id))
             .route(web::delete().to(delete_by_id)),
@@ -34,6 +39,19 @@ pub async fn query(ctx: web::Data<AppContext>, web::Query(user): web::Query<User
     match user.id {
         Some(id) => get_by_id(ctx, &id).await,
         None => get_by_condition(ctx, user).await,
+    }
+}
+
+/// Http handler for querying users with pagination.
+#[tracing::instrument(name = "query_paginated", skip(user, page_request), level = "info")]
+pub async fn query_paginated(
+    ctx: web::Data<AppContext>,
+    web::Query(user): web::Query<User>,
+    web::Query(page_request): web::Query<PageRequest>,
+) -> ApiResult {
+    match user.id {
+        Some(id) => get_by_id(ctx, &id).await,
+        None => get_paginated_by_condition(ctx, user, page_request).await,
     }
 }
 
@@ -62,6 +80,40 @@ async fn get_by_id(ctx: web::Data<AppContext>, id: &Uuid) -> ApiResult {
 
 async fn get_by_condition(ctx: web::Data<AppContext>, user: User) -> ApiResult {
     let users = user_repository::find_all_with_query(&user, ctx.db()).await?;
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .json(users))
+}
+
+async fn get_paginated_by_condition(
+    ctx: web::Data<AppContext>,
+    user: User,
+    page_request: PageRequest,
+) -> ApiResult {
+    let users = user_repository::find_all_paginated_with_query(
+        &user,
+        page_request.page,
+        page_request.page_size,
+        ctx.db(),
+    )
+    .await?;
+    Ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .json(users))
+}
+
+/// Http handler for querying users with pagination.
+#[tracing::instrument(name = "query_paginated", skip(page_request), level = "info")]
+pub async fn query_paginated1(
+    ctx: web::Data<AppContext>,
+    web::Query(page_request): web::Query<PageRequest>,
+) -> ApiResult {
+    // Validate query request
+    page_request.validate()?;
+
+    let users =
+        user_repository::find_all_paginated(page_request.page, page_request.page_size, ctx.db())
+            .await?;
     Ok(HttpResponse::Ok()
         .content_type("application/json")
         .json(users))
