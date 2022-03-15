@@ -17,13 +17,14 @@ pub async fn find_by_id(id: &Uuid, db: &Database) -> Result<Option<User>, Intern
     Ok(user)
 }
 
-// pub async fn find_all(db: &Database) -> Result<Vec<User>, InternalError> {
-// let cursor = db
-// .collection::<User>(COLLECTION_USERS)
-// .find(doc! {}, None)
-// .await?;
-// Ok(cursor.try_collect().await?)
-// }
+pub async fn find_by_email(email: &str, db: &Database) -> Result<Option<User>, InternalError> {
+    let filter = doc! { EMAIL: email };
+    let user = db
+        .collection::<User>(COLLECTION_USERS)
+        .find_one(filter, None)
+        .await?;
+    Ok(user)
+}
 
 pub async fn find_all_with_query(cond: &User, db: &Database) -> Result<Vec<User>, InternalError> {
     let find_opts = FindOptions::builder().sort(doc! {ID: 1}).build();

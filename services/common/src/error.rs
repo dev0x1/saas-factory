@@ -51,6 +51,15 @@ pub enum InternalError {
     #[display(fmt = "Parameter validation error: {}", cause)]
     ParameterValidationError { cause: String },
 
+    #[display(
+        fmt = "Authentication process failed due to invalid invitation confirmation params: {}",
+        cause
+    )]
+    AuthInvalidInvitation { cause: String },
+
+    #[display(fmt = "Authentication failed: user not found")]
+    AuthUserNotFound,
+
     #[display(fmt = "Db error: {}", cause)]
     DbError { cause: String },
 
@@ -156,6 +165,8 @@ impl InternalError {
             InternalError::SendNotificationError { cause: _ } => 2920,
             InternalError::SendRequestError { cause: _ } => 3000,
             InternalError::BlockingTaskExecutionError { cause: _ } => 3100,
+            InternalError::AuthInvalidInvitation { cause: _ } => 4001,
+            InternalError::AuthUserNotFound => 4002,
         }
     }
 
@@ -206,6 +217,8 @@ impl ResponseError for InternalError {
             InternalError::BlockingTaskExecutionError { cause: _ } => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
+            InternalError::AuthInvalidInvitation { cause: _ } => StatusCode::BAD_REQUEST,
+            InternalError::AuthUserNotFound => StatusCode::BAD_REQUEST,
         }
     }
 

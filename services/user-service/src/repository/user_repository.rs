@@ -23,6 +23,15 @@ pub async fn find_by_id(id: &Uuid, db: &Database) -> Result<Option<User>, Intern
     Ok(user)
 }
 
+pub async fn find_by_email(email: &str, db: &Database) -> Result<Option<User>, InternalError> {
+    let filter = doc! { EMAIL: email };
+    let user = db
+        .collection::<User>(COLLECTION_USERS)
+        .find_one(filter, None)
+        .await?;
+    Ok(user)
+}
+
 pub async fn find_all(db: &Database) -> Result<Vec<User>, InternalError> {
     let cursor = db
         .collection::<User>(COLLECTION_USERS)

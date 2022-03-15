@@ -102,23 +102,6 @@ async fn get_paginated_by_condition(
         .json(users))
 }
 
-/// Http handler for querying users with pagination.
-#[tracing::instrument(name = "query_paginated", skip(page_request), level = "info")]
-pub async fn query_paginated1(
-    ctx: web::Data<AppContext>,
-    web::Query(page_request): web::Query<PageRequest>,
-) -> ApiResult {
-    // Validate query request
-    page_request.validate()?;
-
-    let users =
-        user_repository::find_all_paginated(page_request.page, page_request.page_size, ctx.db())
-            .await?;
-    Ok(HttpResponse::Ok()
-        .content_type("application/json")
-        .json(users))
-}
-
 /// Http handler for creating an user.
 #[tracing::instrument(name = "create", skip(user), level = "info")]
 pub async fn create(ctx: web::Data<AppContext>, user: web::Json<User>) -> ApiResult {

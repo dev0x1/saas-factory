@@ -25,6 +25,7 @@ pub mod prelude {
 #[derive(Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Debug, Display, EnumString)]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum UserStatus {
+    Invited,
     Active,
     Inactive,
 }
@@ -32,6 +33,7 @@ pub enum UserStatus {
 impl From<UserStatus> for Bson {
     fn from(status: UserStatus) -> Self {
         match status {
+            UserStatus::Invited => Bson::String("Invited".to_string()),
             UserStatus::Active => Bson::String("Active".to_string()),
             UserStatus::Inactive => Bson::String("Inactive".to_string()),
         }
