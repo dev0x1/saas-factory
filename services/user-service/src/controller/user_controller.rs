@@ -5,19 +5,19 @@ use actix_web::{
 };
 use bson::Uuid;
 use chrono::Utc;
-use common::error::{ApiResult, InternalError};
+use common::{
+    error::{ApiResult, InternalError},
+    model::request::page_request::PageRequest,
+};
 use validator::Validate;
 
 use crate::{
     context::AppContext,
-    model::{
-        domain::user::{
-            prelude::{CACHE_KEY_PREFIX_USER_ID, CACHE_USER_EXPIRY},
-            User,
-            UserRole,
-            UserStatus,
-        },
-        request::page_request::{self, PageRequest},
+    model::domain::user::{
+        prelude::{CACHE_KEY_PREFIX_USER_ID, CACHE_USER_EXPIRY},
+        User,
+        UserRole,
+        UserStatus,
     },
     repository::user_repository,
 };

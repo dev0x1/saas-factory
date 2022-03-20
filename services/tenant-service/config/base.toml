@@ -1,0 +1,19 @@
+[application]
+port = 8001
+host = "tenant_service"
+base_url = "localhost"
+workers = 4
+max_json_payload_size = 4096
+
+[db]
+host = "mongodb"
+port = "27017"
+database_name = "tenant_db"
+
+[cache]
+host = "redis"
+port = "6379"
+
+[tracer.jaeger]
+host = "jaeger"
+port = "6831"

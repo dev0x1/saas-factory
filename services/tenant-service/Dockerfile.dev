@@ -1,0 +1,42 @@
+# 1: Build the application
+FROM rust:latest as builder
+ENV CARGO_TERM_COLOR always
+WORKDIR /app/docker-build
+
+# 1a: Prepare for static linking
+RUN apt-get update && \
+    apt-get dist-upgrade -y && \
+    apt-get install -y musl-tools && \
+    rustup target add x86_64-unknown-linux-musl && \
+    rustup component add rustfmt
+
+# 1b: Download and compile Rust dependencies (and store as a separate Docker layer)
+# create empty project for caching dependencies
+RUN USER=root cargo new --bin tenant-service
+# copy common crate
+COPY /services/common  /app/docker-build/common
+WORKDIR /app/docker-build/tenant-service
+# copy lock file from workspace
+COPY Cargo.lock .
+COPY services/tenant-service/Cargo.toml ./
+# cache dependencies
+RUN cargo install --target x86_64-unknown-linux-musl --path . --locked
+RUN rm src/*.rs
+
+# 1c: Build the exe using the actual source code
+COPY services/tenant-service/src src/
+RUN ["touch", "src/main.rs"]
+RUN cargo install --target x86_64-unknown-linux-musl --path . --locked
+
+# 2: Copy the exe to an empty Docker image
+FROM alpine:3.14
+COPY --from=0 /usr/local/cargo/bin/tenant-service tenant-service
+COPY services/tenant-service/config config/
+ARG APP_ENVIRONMENT=development
+ENV APP_ENVIRONMENT=$APP_ENVIRONMENT
+ARG RUST_BACKTRACE=full
+ENV RUST_BACKTRACE=$RUST_BACKTRACE
+ARG RUST_LOG="info, actix_web=info, actix_server=info, actix_http=info"
+ENV RUST_LOG=$RUST_LOG
+ENTRYPOINT ["./tenant-service"]
+EXPOSE 8003

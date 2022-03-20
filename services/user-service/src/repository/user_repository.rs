@@ -1,12 +1,9 @@
-use crate::model::{
-    domain::{
-        pagination::Pagination,
-        user::{prelude::*, User},
-    },
-    response::page_response::PageResponse,
-};
+use crate::model::domain::user::{prelude::*, User};
 use bson::{from_bson, Uuid};
-use common::error::InternalError;
+use common::{
+    error::InternalError,
+    model::{domain::pagination::Pagination, response::page_response::PageResponse},
+};
 use futures::TryStreamExt;
 use mongodb::{
     bson::{doc, Document},

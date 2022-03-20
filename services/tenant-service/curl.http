@@ -1,0 +1,72 @@
+@api_endpoint="http://localhost:8003/tenant/v1.0"
+
+###
+# @name health
+GET {api_endpoint}/health
+
+###
+# @name get_tenant_by_id_should_fail
+GET {{api_endpoint}}/tenant?_id=12345678123456781234567812345678
+
+
+###
+# @name create_tenant1
+POST {{api_endpoint}}/tenant
+Content-Type: application/json
+
+{
+    "EMAIL": "tenant1@mail.com"
+}
+
+###
+# @name create_tenant2
+POST {{api_endpoint}}/tenant
+Content-Type: application/json
+
+{
+    "EMAIL": "tenant2@mail.com"
+}
+
+###
+# @name create_tenant_invalid_format_fail
+POST {{api_endpoint}}/tenant
+Content-Type: application/json
+
+{
+    "_id": "00c7d7cc-a8f2-4b85-93f7-cd25848f67e1"
+}
+
+###
+# @name get_tenant_by_email
+GET {{api_endpoint}}/tenant?EMAIL=tenant1@mail.com
+
+###
+# @name update_tenant_by_id
+PUT {{api_endpoint}}/tenant
+Content-Type: application/json
+
+{
+    "_id": "b223d113-07f7-460b-a6b6-990f6bd6f4a0",
+    "EMAIL": "tenant1.updated@mail.com"
+}
+
+###
+# @name get_tenant_by_email
+GET {{api_endpoint}}/tenant?EMAIL=tenant1@mail.com
+
+###
+# @name get_tenant_by_email
+GET {{api_endpoint}}/tenant?EMAIL=tenant1.updated@mail.com
+
+###
+# @name get_tenant_by_email
+GET {{api_endpoint}}/tenant?EMAIL=tenant2@mail.com
+
+###
+# @name get_all_tenants
+GET {{api_endpoint}}/tenant
+
+###
+# @name get_tenant_by_id
+GET {{api_endpoint}}/tenant?_id=70276e81-9ac4-4613-b066-770077a80bfc
+

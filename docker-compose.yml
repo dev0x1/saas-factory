@@ -47,6 +47,29 @@ services:
     networks:
       - docker_net
 
+  # Tenant service
+  tenant-service:
+    container_name: 'tenant_service'
+    build:
+      context: .
+      dockerfile: services/tenant-service/Dockerfile.dev
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8003/" ]
+      interval: 1m
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    ports:
+      - '8003:8003'
+    depends_on:
+      - vault-dev-server
+      - mongodb
+      - jaeger
+      - redis
+    networks:
+      - docker_net
+
   # Vault server UI can be viewed at http://localhost:8200/ui
   vault-dev-server:
     image: hashicorp/vault:latest

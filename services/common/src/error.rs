@@ -129,6 +129,9 @@ pub enum InternalError {
     #[display(fmt = "User {} not found", user_id)]
     UserNotFound { user_id: Uuid },
 
+    #[display(fmt = "Tenant {} not found", tenant_id)]
+    TenantNotFound { tenant_id: Uuid },
+
     #[display(fmt = "Failed to internally notify: {}", cause)]
     SendNotificationError { cause: String },
 
@@ -161,7 +164,8 @@ impl InternalError {
             InternalError::InvalidBsonError { cause: _ } => 2210,
             InternalError::BsonAccessError { cause: _ } => 2220,
             InternalError::VaultClientError { cause: _ } => 2300,
-            InternalError::UserNotFound { user_id: _ } => 2509,
+            InternalError::UserNotFound { user_id: _ } => 2501,
+            InternalError::TenantNotFound { tenant_id: _ } => 2502,
             InternalError::SendNotificationError { cause: _ } => 2920,
             InternalError::SendRequestError { cause: _ } => 3000,
             InternalError::BlockingTaskExecutionError { cause: _ } => 3100,
@@ -212,6 +216,7 @@ impl ResponseError for InternalError {
             InternalError::InvalidBsonError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::BsonAccessError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::UserNotFound { user_id: _ } => StatusCode::UNPROCESSABLE_ENTITY,
+            InternalError::TenantNotFound { tenant_id: _ } => StatusCode::UNPROCESSABLE_ENTITY,
             InternalError::SendNotificationError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::SendRequestError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::BlockingTaskExecutionError { cause: _ } => {
