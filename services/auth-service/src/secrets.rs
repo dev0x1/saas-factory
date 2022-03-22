@@ -13,7 +13,7 @@ pub struct Secrets {
 }
 
 pub async fn read(settings: &Settings) -> Result<Secrets, InternalError> {
-    let vault_client: VaultClient = sm_vault::connect(&settings.vault).await?;
+    let vault_client: VaultClient = sm_vault::connect(&settings.vault)?;
 
     let cache_secrets: RedisClientSecrets =
         sm_vault::get_secret_value(&vault_client, &settings.cache_secrets_path).await?;

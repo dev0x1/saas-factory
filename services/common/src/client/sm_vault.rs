@@ -20,7 +20,7 @@ pub struct VaultKvPath {
     pub path: String,
 }
 
-pub async fn connect(config: &VaultClientConfig) -> Result<VaultClient, InternalError> {
+pub fn connect(config: &VaultClientConfig) -> Result<VaultClient, InternalError> {
     let settings = VaultClientSettingsBuilder::default()
         .address(&config.server_url)
         .token(config.token.expose_secret())
