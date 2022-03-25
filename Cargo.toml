@@ -5,4 +5,6 @@ members = [
     "services/auth-service",
     "services/user-service",
     "services/tenant-service",
+
+    "libs/nats-actor"
 ]

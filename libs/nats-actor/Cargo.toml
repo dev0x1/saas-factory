@@ -1,0 +1,31 @@
+[package]
+name = "nats-actor"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix = "0.13.0"
+async-channel = "1.6"
+async-trait = "0.1"
+futures-util = { version = "0.3", default-features = false, features=["std"]}
+log = "0.4"
+serde = { version = "1.0", features = ['derive'] }
+serde_json = "1.0"
+thiserror = "1.0"
+tokio = { version = "1", features = ["net", "time"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+tokio-util = { version = "0.7.0", features = ["codec"] }
+tracing = "0.1"
+tracing-futures = "0.2"
+derive_more = "0.99.14"
+async-nats = { version = "0.10" }
+backoff = { version = "0.4.0", default-features = false, features = ["tokio"] }
+uuid = { version = "0.8", default-features = false, features = ["serde", "v4"] }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+
+
+# for events
+cloudevents-sdk = "0.5"
+
