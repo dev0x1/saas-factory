@@ -51,6 +51,27 @@ pub enum InternalError {
     #[display(fmt = "Parameter validation error: {}", cause)]
     ParameterValidationError { cause: String },
 
+    #[display(fmt = "Failed to parse event")]
+    EventParse,
+
+    #[display(fmt = "Failed to build event")]
+    EventBuilder,
+
+    #[display(fmt = "Failed to encode event payload: {}", cause)]
+    EventPayloadEncoder { cause: String },
+
+    #[display(fmt = "Unknown event type")]
+    EventUnknownType,
+
+    #[display(fmt = "Cloud event error: {}", cause)]
+    CloudEvent { cause: String },
+
+    #[display(fmt = "Failed to connect to event server: {}", cause)]
+    EventConnection { cause: String },
+
+    #[display(fmt = "Failed to send event: {}", cause)]
+    EventSend { cause: String },
+
     #[display(
         fmt = "Authentication process failed due to invalid invitation confirmation params: {}",
         cause
@@ -145,6 +166,13 @@ impl InternalError {
             InternalError::InvalidFormatError { cause: _ } => 400,
             InternalError::ConversionError => 1000,
             InternalError::ParameterValidationError { cause: _ } => 1050,
+            InternalError::EventParse => 1060,
+            InternalError::EventBuilder => 1061,
+            InternalError::EventPayloadEncoder { cause: _ } => 1062,
+            InternalError::EventUnknownType => 1063,
+            InternalError::CloudEvent { cause: _ } => 1064,
+            InternalError::EventConnection { cause: _ } => 1065,
+            InternalError::EventSend { cause: _ } => 1066,
             InternalError::InvalidClaim { claim: _ } => 1100,
             InternalError::RemoteRequestError { cause: _, url: _ } => 1105,
             InternalError::RequestFormatError { reason: _ } => 1110,
@@ -189,6 +217,13 @@ impl ResponseError for InternalError {
         match *self {
             InternalError::ConversionError => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::ParameterValidationError { cause: _ } => StatusCode::BAD_REQUEST,
+            InternalError::EventParse => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::EventBuilder => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::EventPayloadEncoder { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::EventUnknownType => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::CloudEvent { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::EventConnection { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            InternalError::EventSend { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::InvalidFormatError { cause: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             InternalError::InvalidClaim { claim: _ } => StatusCode::FORBIDDEN,
             InternalError::RemoteRequestError { cause: _, url: _ } => {
@@ -426,6 +461,7 @@ impl From<InvalidHeaderValue> for InternalError {
 
 impl From<std::fmt::Error> for InternalError {
     fn from(_: std::fmt::Error) -> Self {
+        // #TODO
         todo!()
     }
 }
