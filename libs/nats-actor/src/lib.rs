@@ -32,7 +32,7 @@ pub struct EventMessage {
     pub event: CloudEvent,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct NatsClientSettings {
     pub addresses: Vec<String>,
     pub max_reconnects: Option<usize>,

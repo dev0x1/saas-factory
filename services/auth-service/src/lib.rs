@@ -14,7 +14,12 @@ use common::{
         db_mongo::{self},
     },
     error::REDACTED_ERRORS,
+    model::event::v1::SERVICE_AUTH_SUBJECT,
     util::{actix_json_config::json_extractor_config, telemetry},
+};
+use nats_actor::{
+    publisher::{NatsPublisher, NatsPublisherConfig},
+    NatsClientSettings,
 };
 use secrets::Secrets;
 use std::sync::Arc;
@@ -58,12 +63,26 @@ pub async fn start_web_service(
     let cache_pool: CachePool = cache_redis::connect(&configuration.cache, &secrets.cache)?;
     let cache_client: Cache = cache_redis::Cache::new(cache_pool);
 
+    // Start the NATS publisher actor.
+    let publisher = NatsPublisher::start_new(NatsPublisherConfig {
+        client_settings: NatsClientSettings {
+            addresses: configuration.nats.addresses,
+            max_reconnects: configuration.nats.max_reconnects,
+            retry_timeout: configuration.nats.retry_timeout,
+        },
+        subject: SERVICE_AUTH_SUBJECT.into(),
+        mailbox_size: configuration.application.nats_publisher_mailbox_size,
+    })
+    .await
+    .expect("nats connection setup failure");
+
     // Instantiate the application context. This application state will be
     // cloned for each Actix thread but the Arc of the DbContext will be
     // reused in each Actix thread.
     let app_context = web::Data::new(AppContext {
         db: Arc::new(db_client),
         cache: Arc::new(cache_client),
+        event_publisher: Arc::new(publisher),
     });
 
     let server = HttpServer::new(move || {

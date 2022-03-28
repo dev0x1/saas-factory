@@ -6,6 +6,7 @@ use common::{
     },
     util::configuration,
 };
+use nats_actor::NatsClientSettings;
 use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Debug, serde::Deserialize, Clone)]
@@ -16,6 +17,7 @@ pub struct Settings {
     pub db_secrets_path: VaultKvPath,
     pub cache: RedisClientSettings,
     pub cache_secrets_path: VaultKvPath,
+    pub nats: NatsClientSettings,
     pub log: LogSettings,
     pub tracer: Tracer,
 }
@@ -28,8 +30,8 @@ pub struct ApplicationSettings {
     pub base_url: String,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub workers: usize,
-    #[serde(deserialize_with = "deserialize_number_from_string")]
     pub max_json_payload_size: usize,
+    pub nats_publisher_mailbox_size: usize,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]

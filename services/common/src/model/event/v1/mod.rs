@@ -18,6 +18,15 @@ pub struct EventMetadata {
     trace_id: String,
 }
 
+impl EventMetadata {
+    pub fn new(source: String, trace_id: &str) -> EventMetadata {
+        EventMetadata {
+            source,
+            trace_id: trace_id.into(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Event {
     AuthUserCreated(auth::UserCreated),

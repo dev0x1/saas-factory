@@ -4,6 +4,7 @@ host = "auth_service"
 base_url = "localhost"
 workers = 4
 max_json_payload_size = 4096
+nats_publisher_mailbox_size = 100
 
 [db]
 host = "mongodb"
@@ -13,6 +14,11 @@ database_name = "auth_db"
 [cache]
 host = "redis"
 port = "6379"
+
+[nats]
+addresses = ["nats_server:4222"]
+max_reconnects = 5,
+retry_timeout = 30,
 
 [tracer.jaeger]
 host = "jaeger"

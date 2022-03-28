@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use actix::Addr;
 use actix_web::{
     post,
     web::{self},
@@ -5,8 +8,17 @@ use actix_web::{
 };
 use bson::Uuid;
 use chrono::Utc;
-use common::error::{ApiResult, InternalError};
+use common::{
+    error::{ApiResult, InternalError},
+    model::event::v1::{
+        auth::{UserCreated, UserCreatedMessage},
+        Event,
+        EventMetadata,
+        SERVICE_AUTH_SUBJECT,
+    },
+};
 use futures::TryFutureExt;
+use nats_actor::{publisher::NatsPublisher, EventMessage};
 use validator::Validate;
 
 use crate::{
@@ -90,6 +102,19 @@ pub async fn invite_confirmation(
 
     user.status = Some(UserStatus::Active);
     let _ = user_repository::update_by_id(&user, ctx.db()).await?;
+
+    // emit an event
+    let user_created_event = Event::AuthUserCreated(UserCreated {
+        meta: EventMetadata::new(SERVICE_AUTH_SUBJECT.into(), "trace_id"),
+        payload: UserCreatedMessage {
+            id: user.id.unwrap().to_string(),
+            email: user.email.clone().unwrap(),
+        },
+    });
+    let publisher = Arc::clone(&ctx.event_publisher);
+    publisher.do_send(EventMessage {
+        event: user_created_event.try_into().unwrap(),
+    });
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")

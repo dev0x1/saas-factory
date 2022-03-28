@@ -140,5 +140,12 @@ services:
     networks:
       - docker_net
 
+  nats-server:
+    image: nats-streaming:alpine3.15
+    container_name: nats_server
+    ports:
+      - "8222:8222"
+      - "4222:4222"
+
 networks:
   docker_net:

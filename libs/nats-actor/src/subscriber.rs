@@ -12,7 +12,7 @@ pub struct NatsStreamMessage {
     pub msg: NatsMessage,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct NatsSubscriberConfig {
     pub client_settings: NatsClientSettings,
     pub subject: String,

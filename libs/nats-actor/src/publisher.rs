@@ -4,7 +4,7 @@ use actix::prelude::*;
 use async_nats::Connection;
 use cloudevents::AttributesReader;
 use log::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{io::Error, ops::Deref, rc::Rc};
 use tokio::time;
 use tracing_futures::Instrument;
@@ -25,7 +25,7 @@ pub struct NatsPublisher {
 
 impl actix::io::WriteHandler<Error> for NatsPublisher {}
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct NatsPublisherConfig {
     pub client_settings: NatsClientSettings,
     pub subject: String,
