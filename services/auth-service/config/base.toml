@@ -17,8 +17,8 @@ port = "6379"
 
 [nats]
 addresses = ["nats_server:4222"]
-max_reconnects = 5,
-retry_timeout = 30,
+max_reconnects = 5
+retry_timeout = 30
 
 [tracer.jaeger]
 host = "jaeger"
