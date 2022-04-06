@@ -1,4 +1,5 @@
 use crate::error::InternalError;
+use actix::Message;
 use chrono::Utc;
 use cloudevents::{Data, EventBuilder};
 use serde::{Deserialize, Serialize};
@@ -6,30 +7,17 @@ use serde_json::json;
 
 use self::auth::prelude::*;
 
+use super::EventMessage;
+
 pub mod auth;
 pub mod tenant;
 pub mod user;
 
-pub const SERVICE_AUTH_SUBJECT: &str = "service.auth";
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct EventMetadata {
-    source: String,
-    trace_id: String,
-}
-
-impl EventMetadata {
-    pub fn new(source: String, trace_id: &str) -> EventMetadata {
-        EventMetadata {
-            source,
-            trace_id: trace_id.into(),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Message)]
+#[rtype(result = "Result<(), std::io::Error>")]
 pub enum Event {
-    AuthUserCreated(auth::UserCreated),
+    SendOtp(EventMessage<auth::SendOtpMessage>),
+    AuthUserCreated(EventMessage<auth::UserCreatedMessage>),
 }
 
 impl TryFrom<Event> for cloudevents::Event {
@@ -38,12 +26,17 @@ impl TryFrom<Event> for cloudevents::Event {
     fn try_from(value: Event) -> Result<cloudevents::Event, Self::Error> {
         let builder = cloudevents::event::EventBuilderV10::new().time(Utc::now());
 
-        let payload = json!(value);
         let builder = match value {
-            Event::AuthUserCreated(auth::UserCreated { meta, payload }) => builder
+            Event::AuthUserCreated(EventMessage { meta, payload }) => builder
                 .source(meta.source)
                 .subject(SERVICE_AUTH_SUBJECT)
                 .ty(SERVICE_AUTH_EVENT_USER_CREATED)
+                .id(meta.trace_id)
+                .data(mime::APPLICATION_JSON.to_string(), json!(payload)),
+            Event::SendOtp(EventMessage { meta, payload }) => builder
+                .source(meta.source)
+                .subject(SERVICE_AUTH_SUBJECT)
+                .ty(SERVICE_AUTH_COMMAND_SEND_OTP)
                 .id(meta.trace_id)
                 .data(mime::APPLICATION_JSON.to_string(), json!(payload)),
         };

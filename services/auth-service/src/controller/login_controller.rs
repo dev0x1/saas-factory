@@ -10,15 +10,17 @@ use bson::Uuid;
 use chrono::Utc;
 use common::{
     error::{ApiResult, InternalError},
-    model::event::v1::{
-        auth::{UserCreated, UserCreatedMessage},
-        Event,
+    model::event::{
+        v1::{
+            auth::{prelude::SERVICE_AUTH_SUBJECT, UserCreatedMessage},
+            Event,
+        },
+        EventMessage,
         EventMetadata,
-        SERVICE_AUTH_SUBJECT,
     },
 };
 use futures::TryFutureExt;
-use nats_actor::{publisher::NatsPublisher, EventMessage};
+use nats_actor::{publisher::NatsPublisher, EventMessage as NatsEventMessage};
 use validator::Validate;
 
 use crate::{
@@ -104,7 +106,7 @@ pub async fn invite_confirmation(
     let _ = user_repository::update_by_id(&user, ctx.db()).await?;
 
     // emit an event
-    let user_created_event = Event::AuthUserCreated(UserCreated {
+    let user_created_event = Event::AuthUserCreated(EventMessage {
         meta: EventMetadata::new(SERVICE_AUTH_SUBJECT.into(), "trace_id"),
         payload: UserCreatedMessage {
             id: user.id.unwrap().to_string(),
@@ -112,7 +114,7 @@ pub async fn invite_confirmation(
         },
     });
     let publisher = Arc::clone(&ctx.event_publisher);
-    publisher.do_send(EventMessage {
+    publisher.do_send(NatsEventMessage {
         event: user_created_event.try_into().unwrap(),
     });
 

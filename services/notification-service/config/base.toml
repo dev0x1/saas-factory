@@ -1,0 +1,20 @@
+[application]
+port = 8001
+host = "notification_service"
+base_url = "localhost"
+workers = 4
+max_json_payload_size = 4096
+nats_subscriber_mailbox_size = 100
+
+[cache]
+host = "redis"
+port = "6379"
+
+[nats]
+addresses = ["nats_server:4222"]
+max_reconnects = 5
+retry_timeout = 30
+
+[tracer.jaeger]
+host = "jaeger"
+port = "6831"

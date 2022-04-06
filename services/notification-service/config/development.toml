@@ -1,0 +1,17 @@
+[log]
+level = "debug"
+rust_log = "debug, actix_web=debug, actix_server=debug, actix_http=debug"
+rust_backtrace = "full"
+redacted_errors = false
+
+[vault]
+server_url = "http://vault_dev_server:8200"
+# this value needs to be in sync with value specified in docker-compose 
+# config of vault_dev_server
+token = "token-root-dont-use-in-production"
+
+# this value needs to be in sync with value specified in secret init 
+# scripts of vault_client
+[cache_secrets_path]
+mount = "notification-service-secrets-kv"
+path = "dev/redis"

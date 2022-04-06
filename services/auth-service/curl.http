@@ -1,4 +1,4 @@
-@api_endpoint="http://localhost:8001/auth/v1.0"
+@api_endpoint=http://localhost:8001/auth/v1.0
 
 ###
 # @name health

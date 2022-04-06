@@ -40,4 +40,9 @@ echo "Adding tenant-service secrets..."
 vault kv put tenant-service-secrets-kv/dev/mongo user_name=test_user password=test_password
 vault kv put tenant-service-secrets-kv/dev/redis password=test_password
 
+echo "Initializing notification-service vault..."
+vault secrets enable -version=2 -path=notification-service-secrets-kv kv
+echo "Adding notification-service secrets..."
+vault kv put notification-service-secrets-kv/dev/redis password=test_password
+
 echo "Done adding secrets to vault server."

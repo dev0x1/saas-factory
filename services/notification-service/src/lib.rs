@@ -1,3 +1,4 @@
+mod actor;
 mod context;
 mod controller;
 mod model;
@@ -8,22 +9,20 @@ mod settings;
 use crate::{context::AppContext, settings::Settings};
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_web_opentelemetry::RequestTracing;
+use actor::event_stream_handler::EventStreamHandler;
 use common::{
-    client::{
-        cache_redis::{self, Cache, CachePool},
-        db_mongo::{self},
-    },
+    client::cache_redis::{self, Cache, CachePool},
     error::REDACTED_ERRORS,
-    model::event::v1::auth::prelude::SERVICE_AUTH_SUBJECT,
+    model::event::v1::{auth::prelude::SERVICE_AUTH_SUBJECT, Event},
     util::{actix_json_config::json_extractor_config, telemetry},
 };
-use nats_actor::{
-    publisher::{NatsPublisher, NatsPublisherConfig},
-    NatsClientSettings,
-};
+use nats_actor::subscriber::{NatsStreamMessage, NatsSubscriberConfig};
 use secrets::Secrets;
 use std::sync::Arc;
+use tracing::info;
 use tracing_actix_web::TracingLogger;
+
+use nats_actor::{subscriber::subscribe_to_nats, NatsClientSettings};
 
 pub async fn server() -> Result<(), std::io::Error> {
     // configure tracing subscriber
@@ -37,6 +36,8 @@ pub async fn server() -> Result<(), std::io::Error> {
         &settings.tracer.jaeger.host, &settings.tracer.jaeger.port,
     );
     telemetry::config_telemetry(&app_name, &jaeger_url);
+
+    tracing::info!("services starting...");
 
     // Start Web server
     start_web_service(&app_name, settings).await?;
@@ -56,33 +57,43 @@ pub async fn start_web_service(
 
     let secrets: Secrets = secrets::read(&configuration).await?;
 
-    let db_client = db_mongo::connect(app_name, &configuration.db, &secrets.db)
-        .await
-        .expect("db client connection failure");
-
     let cache_pool: CachePool = cache_redis::connect(&configuration.cache, &secrets.cache)?;
     let cache_client: Cache = cache_redis::Cache::new(cache_pool);
-
-    // Start the NATS publisher actor.
-    let publisher = NatsPublisher::start_new(NatsPublisherConfig {
-        client_settings: NatsClientSettings {
-            addresses: configuration.nats.addresses,
-            max_reconnects: configuration.nats.max_reconnects,
-            retry_timeout: configuration.nats.retry_timeout,
-        },
-        subject: SERVICE_AUTH_SUBJECT.into(),
-        mailbox_size: configuration.application.nats_publisher_mailbox_size,
-    })
-    .await
-    .expect("nats connection setup failure");
 
     // Instantiate the application context. This application state will be
     // cloned for each Actix thread but the Arc of the DbContext will be
     // reused in each Actix thread.
     let app_context = web::Data::new(AppContext {
-        db: Arc::new(db_client),
         cache: Arc::new(cache_client),
-        event_publisher: Arc::new(publisher),
+    });
+
+    let nats_stream_handler = EventStreamHandler {
+        context: Arc::clone(&app_context),
+    };
+
+    // start NATS subscriber for event streams
+    actix::spawn(async move {
+        subscribe_to_nats(
+            NatsSubscriberConfig {
+                client_settings: NatsClientSettings {
+                    addresses: configuration.nats.addresses,
+                    max_reconnects: configuration.nats.max_reconnects,
+                    retry_timeout: configuration.nats.retry_timeout,
+                },
+                subject: SERVICE_AUTH_SUBJECT.into(),
+                mailbox_size: configuration.application.nats_subscriber_mailbox_size,
+            },
+            move |msg: NatsStreamMessage| {
+                info!("Received event {:?}", msg);
+                let event: cloudevents::Event = serde_json::from_slice(&msg.msg.data).unwrap();
+                let event: Event = event.try_into().unwrap();
+                info!("Extracted event {:?}", event);
+                // nats_stream_handler.try_send(event);
+                Ok(())
+            },
+        )
+        .await
+        .expect("nats connection/subscriber setup failure");
     });
 
     let server = HttpServer::new(move || {
@@ -91,7 +102,7 @@ pub async fn start_web_service(
             .app_data(json_extractor_config(4096))
             .wrap(TracingLogger::default())
             .wrap(RequestTracing::new())
-            .service(web::scope("/auth/v1.0").configure(controller::global_router))
+            .service(web::scope("/notification/v1.0").configure(controller::global_router))
             .default_service(web::get().to(not_found))
     })
     .bind(&this_server_address)?;
