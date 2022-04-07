@@ -7,16 +7,22 @@ mod secrets;
 mod settings;
 
 use crate::{context::AppContext, settings::Settings};
+use actix::Actor;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_web_opentelemetry::RequestTracing;
-use actor::event_stream_handler::EventStreamHandler;
+use actor::{email_sender::EmailSender, event_stream_handler::EventStreamHandler};
 use common::{
     client::cache_redis::{self, Cache, CachePool},
     error::REDACTED_ERRORS,
     model::event::v1::{auth::prelude::SERVICE_AUTH_SUBJECT, Event},
     util::{actix_json_config::json_extractor_config, telemetry},
 };
+use lettre::{
+    transport::smtp::{authentication::Credentials, PoolConfig},
+    SmtpTransport,
+};
 use nats_actor::subscriber::{NatsStreamMessage, NatsSubscriberConfig};
+use secrecy::ExposeSecret;
 use secrets::Secrets;
 use std::sync::Arc;
 use tracing::info;
@@ -60,6 +66,28 @@ pub async fn start_web_service(
     let cache_pool: CachePool = cache_redis::connect(&configuration.cache, &secrets.cache)?;
     let cache_client: Cache = cache_redis::Cache::new(cache_pool);
 
+    // Open a remote connection pool to SMTP server
+    let smtp_mailer = SmtpTransport::relay(&configuration.smtp.server)
+        .expect("failed to initialize SMTP client")
+        .credentials(Credentials::new(
+            secrets.smtp.user_name,
+            secrets.cache.password.expose_secret().to_string(),
+        ))
+        .pool_config(
+            PoolConfig::new()
+                .min_idle(configuration.smtp.min_idle_connections)
+                .max_size(configuration.smtp.max_pooled_connections)
+                .idle_timeout(configuration.smtp.idle_timeout),
+        )
+        .build();
+
+    // Start mail sendor actor
+    let email_sender = EmailSender {
+        smtp_mailer: Arc::new(smtp_mailer),
+    }
+    .start()
+    .recipient();
+
     // Instantiate the application context. This application state will be
     // cloned for each Actix thread but the Arc of the DbContext will be
     // reused in each Actix thread.
@@ -69,7 +97,9 @@ pub async fn start_web_service(
 
     let nats_stream_handler = EventStreamHandler {
         context: Arc::clone(&app_context),
-    };
+        email_sender,
+    }
+    .start();
 
     // start NATS subscriber for event streams
     actix::spawn(async move {
@@ -88,7 +118,7 @@ pub async fn start_web_service(
                 let event: cloudevents::Event = serde_json::from_slice(&msg.msg.data).unwrap();
                 let event: Event = event.try_into().unwrap();
                 info!("Extracted event {:?}", event);
-                // nats_stream_handler.try_send(event);
+                nats_stream_handler.try_send(event);
                 Ok(())
             },
         )

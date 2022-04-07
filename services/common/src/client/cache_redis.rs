@@ -16,7 +16,7 @@ pub struct RedisClientSettings {
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize)]
 pub struct RedisClientSecrets {
     pub password: Secret<String>,
 }

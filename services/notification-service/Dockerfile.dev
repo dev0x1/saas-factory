@@ -1,7 +1,7 @@
 # 1: Build the application
 FROM rust:latest as builder
 ENV CARGO_TERM_COLOR always
-WORKDIR /app/docker-build
+WORKDIR /app/docker-build/services
 
 # 1a: Prepare for static linking
 RUN apt-get update && \
@@ -14,8 +14,9 @@ RUN apt-get update && \
 # create empty project for caching dependencies
 RUN USER=root cargo new --bin notification-service
 # copy common crate
-COPY /services/common  /app/docker-build/common
-WORKDIR /app/docker-build/notification-service
+COPY services/common  /app/docker-build/services/common
+COPY libs/nats-actor  /app/docker-build//libs/nats-actor
+WORKDIR /app/docker-build/services/notification-service
 # copy lock file from workspace
 COPY Cargo.lock .
 COPY services/notification-service/Cargo.toml ./

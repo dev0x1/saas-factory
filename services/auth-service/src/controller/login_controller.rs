@@ -109,7 +109,7 @@ pub async fn invite_confirmation(
     let user_created_event = Event::AuthUserCreated(EventMessage {
         meta: EventMetadata::new(SERVICE_AUTH_SUBJECT.into(), "trace_id"),
         payload: UserCreatedMessage {
-            id: user.id.unwrap().to_string(),
+            user_id: user.id.unwrap().to_string(),
             email: user.email.clone().unwrap(),
         },
     });

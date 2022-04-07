@@ -6,7 +6,7 @@ use common::{
 use serde::Deserialize;
 use vaultrs::client::VaultClient;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Secrets {
     pub cache: RedisClientSecrets,
     pub db: MongoClientSecrets,

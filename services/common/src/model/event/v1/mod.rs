@@ -16,7 +16,7 @@ pub mod user;
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Message)]
 #[rtype(result = "Result<(), std::io::Error>")]
 pub enum Event {
-    SendOtp(EventMessage<auth::SendOtpMessage>),
+    AuthSendOtp(EventMessage<auth::SendOtpMessage>),
     AuthUserCreated(EventMessage<auth::UserCreatedMessage>),
 }
 
@@ -33,7 +33,7 @@ impl TryFrom<Event> for cloudevents::Event {
                 .ty(SERVICE_AUTH_EVENT_USER_CREATED)
                 .id(meta.trace_id)
                 .data(mime::APPLICATION_JSON.to_string(), json!(payload)),
-            Event::SendOtp(EventMessage { meta, payload }) => builder
+            Event::AuthSendOtp(EventMessage { meta, payload }) => builder
                 .source(meta.source)
                 .subject(SERVICE_AUTH_SUBJECT)
                 .ty(SERVICE_AUTH_COMMAND_SEND_OTP)

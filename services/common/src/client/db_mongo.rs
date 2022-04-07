@@ -20,7 +20,7 @@ pub struct MongoClientSettings {
     pub database_name: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize)]
 pub struct MongoClientSecrets {
     pub user_name: String,
     pub password: Secret<String>,

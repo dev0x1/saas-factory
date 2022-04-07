@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use common::{
     client::{
         cache_redis::RedisClientSettings,
@@ -14,6 +16,8 @@ pub struct Settings {
     pub vault: VaultClientConfig,
     pub cache: RedisClientSettings,
     pub cache_secrets_path: VaultKvPath,
+    pub smtp: SmtpSettings,
+    pub smtp_secrets_path: VaultKvPath,
     pub nats: NatsClientSettings,
     pub log: LogSettings,
     pub tracer: Tracer,
@@ -30,6 +34,14 @@ pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub max_json_payload_size: usize,
     pub nats_subscriber_mailbox_size: usize,
+}
+
+#[derive(Debug, serde::Deserialize, Clone)]
+pub struct SmtpSettings {
+    pub server: String,
+    pub max_pooled_connections: u32,
+    pub min_idle_connections: u32,
+    pub idle_timeout: Duration,
 }
 
 #[derive(Debug, serde::Deserialize, Clone)]

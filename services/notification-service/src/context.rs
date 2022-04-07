@@ -1,6 +1,5 @@
 use common::client::cache_redis::Cache;
 use std::sync::Arc;
-
 #[derive(Debug)]
 pub struct AppContext {
     pub(crate) cache: Arc<Cache>,

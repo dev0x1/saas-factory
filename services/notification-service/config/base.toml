@@ -10,6 +10,12 @@ nats_subscriber_mailbox_size = 100
 host = "redis"
 port = "6379"
 
+[smtp]
+server = "smtp.mymail.com"
+max_pooled_connections = 10
+min_idle_connections = 2
+idle_timeout = 60
+
 [nats]
 addresses = ["nats_server:4222"]
 max_reconnects = 5

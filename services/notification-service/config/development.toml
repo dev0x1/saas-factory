@@ -15,3 +15,9 @@ token = "token-root-dont-use-in-production"
 [cache_secrets_path]
 mount = "notification-service-secrets-kv"
 path = "dev/redis"
+
+# this value needs to be in sync with value specified in secret init 
+# scripts of vault_client
+[smtp_secrets_path]
+mount = "notification-service-secrets-kv"
+path = "dev/smtp"
