@@ -1,4 +1,4 @@
-<h1 align="center">Common SaaS Services Implemented in Rust</h1>
+<h1 align="center">SaaS Boilerplate Implemented in Rust</h1>
 
 <p style="text-align: center;">
     <a href="https://github.com/arkworks-rs/algebra/blob/master/LICENSE-APACHE"><img src="https://img.shields.io/badge/license-APACHE-blue.svg"></a>
